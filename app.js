@@ -1,36 +1,27 @@
-// import express module
-import express from "express";
-import { authenticate } from "./database/authenticate.js";
+import express from 'express';
+import router from './routes/index.js';
+import { rateLimit } from 'express-rate-limit';
+import { authenticate } from './database/authenticate.js';
+import dotenv from 'dotenv';
 
-// create an instance of express app
+dotenv.config();
+
+const limiter = rateLimit({
+  windowMs: 5 * 1000,
+  limit: 100,
+  standardHeaders: 'draft-7',
+  legacyHeaders: false
+});
+
 const app = express();
+const port = process.env.PORT || 3000;
 
-// Middleware for parse body of http request
 app.use(express.json());
-app.use(express.urlencoded({ extended: true }));
+app.use(limiter);
 
-// example route
-app.get("/", (req, res) => {
-  res.send("Hello, world from Express!");
-});
+app.use('/', router);
 
-// Route with parameters
-app.get("/greeting/:name", (req, res) => {
-  const name = req.params.name;
-  res.send(`¡Hello, ${name}!`);
-});
-
-// Middleware for handle errors
-app.use((err, req, res, next) => {
-  console.error(err.stack);
-  res.status(500).send("Something went wrong with the server");
-});
-
-// Port where server will execute
-const PORT = process.env.PORT || 3000;
-
-// Start server and listening to the specific port
-app.listen(PORT, () => {
+app.listen(port, () => {
   authenticate();
-  console.log(`Express server listening to port ${PORT}`);
+  console.log(`Server listening on port ${port}`);
 });
