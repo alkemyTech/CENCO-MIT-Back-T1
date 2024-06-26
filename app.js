@@ -1,5 +1,6 @@
 // import express module
 import express from "express";
+import { authenticate } from "./database/authenticate.js";
 
 // create an instance of express app
 const app = express();
@@ -30,5 +31,6 @@ const PORT = process.env.PORT || 3000;
 
 // Start server and listening to the specific port
 app.listen(PORT, () => {
+  authenticate();
   console.log(`Express server listening to port ${PORT}`);
 });
