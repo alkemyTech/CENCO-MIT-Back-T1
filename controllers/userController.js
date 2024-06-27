@@ -5,8 +5,8 @@ export const userController = {
     const {email, password} = req.body;
     try {
       const token = await userService.login(email,password)
-      if (!token) res.send({ massage: "El correo o la contraseña es incorrecto" })
-      else res.send({ message: "Ingreso exitoso", data: { token } })
+      if (!token) res.status(401).send({ massage: "El correo o la contraseña es incorrecto" })
+      else res.status(200).send({ message: "Ingreso exitoso", data: { token } })
     } catch (error) {
       res.status(400).send({ message: error.message });
     }
