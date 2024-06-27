@@ -1,6 +1,6 @@
 import { userService } from "../services/userService.js";
 
-export const AdminController = {
+export const adminController = {
     getUsers: async (req, res) => {
       console.log("getAll")
       try {
