@@ -1,6 +1,41 @@
 import { userService } from '../services/userService.js';
 
+
 export const userController = {
+  getAll: async (req, res) => {
+    console.log("getAll")
+    try {
+      const users = await userService.getAll();
+      res.status(200).json(users);
+    } catch (error) {
+      console.error(error);
+      res.status(500).json({ error: 'Internal server error' });
+    }
+  },
+  getUser: async (req, res) => {
+    try {
+      const { user } = req;
+      res.status(200).json(user);
+    } catch (error) {
+      console.error(error);
+      res.status(500).json({ error: 'Internal server error' });
+    }
+  },
+  getById: async (req, res) => {
+    try {
+      const { id } = req.params;
+      const user = await userService.getById(id);
+      if (!user) {
+        return res.status(404).json({ error: 'User not found' });
+      }
+      res.status(200).json(user);
+    } catch (error) {
+      console.error(error);
+      res.status(500).json({ error: 'Internal server error' });
+    }
+  }
+  ,
+
   login: async function (req, res) {
     const {email, password} = req.body;
     try {
