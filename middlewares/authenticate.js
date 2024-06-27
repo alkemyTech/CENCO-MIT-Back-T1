@@ -1,7 +1,7 @@
 import jwt from "jsonwebtoken";
 import { JWT_SECRET } from "../config/config.js";
 import { userService } from "../services/userService.js";
-
+import { adminService } from "../services/adminService.js";
 
 export const authenticateToken = (req, res, next) => {
   try {
@@ -33,7 +33,7 @@ export const authenticateAdminToken = async (req, res, next) => {
 
     const payload = jwt.verify(token, JWT_SECRET);
 
-    const isAdmin = await userService.isAdmin(payload);
+    const isAdmin = await adminService.isAdmin(payload);
 
     if (!isAdmin) {
       return res.status(403).send({ message: "Permission denied" });
