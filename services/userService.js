@@ -32,7 +32,7 @@ export const userService = {
       const token = jwt.sign({ email }, JWT_SECRET, { expiresIn: '1h' });
       return token;
     } catch (error) {
-      console.error('Error al autenticar usuario:', error);
+      console.error('Error authenticating user:', error);
       throw error;
     }
   },
