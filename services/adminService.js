@@ -35,5 +35,26 @@ export const adminService = {
         console.error('Error getting users:', error);
         throw error;
       });
-  } 
+  },
+  //Filter users by country
+  filterByCountry: async (country) => {
+    try {
+        const usersFoundByCountry = await User.findAll({where: {country: country}})
+        .then(users => users.map(u => ({
+        //returns only the necessary data
+          firstName: u.firstName,
+          lastName: u.lastName,
+          email: u.email,
+          phone: u.phone,
+          country: u.country,
+          birthdate: u.birthdate,
+          role: u.role,
+        })));
+        if(!usersFoundByCountry || usersFoundByCountry.length === 0) return null;
+        return usersFoundByCountry;
+    } catch (error) {
+        console.error("Error filtering users by country:",error);
+        throw error;
+    }
+  }
 };
