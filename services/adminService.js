@@ -32,7 +32,7 @@ export const adminService = {
       })))
       .catch(error => {
         // handle error
-        console.error('Error al obtener usuarios:', error);
+        console.error('Error getting users:', error);
         throw error;
       });
   } 
