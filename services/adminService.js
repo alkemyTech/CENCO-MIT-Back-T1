@@ -19,7 +19,7 @@ export const adminService = {
     // Assuming User is an array-like object or a database model with a .map method
     return User.findAll() // Adjust this line if User is not a Sequelize model
       .then(users => users.map(u => ({
-        
+
         firstName: u.firstName,
         lastName: u.lastName,
         email: u.email,
@@ -35,5 +35,26 @@ export const adminService = {
         console.error('Error getting users:', error);
         throw error;
       });
-  } 
+  },
+  //Filter users by country
+  filterByCountry: async (country) => {
+    try {
+      const usersFoundByCountry = await User.findAll({ where: { country: country } });
+      // Loop through usersData array to determine which values to display
+      const usersData = usersFoundByCountry.map(u => ({
+        //returns only the necessary data
+        firstName: u.firstName,
+        lastName: u.lastName,
+        email: u.email,
+        phone: u.phone,
+        country: u.country,
+        birthdate: u.birthdate,
+        role: u.role,
+      }));
+      return usersData;
+    } catch (error) {
+      console.error("Error filtering users by country:", error);
+      throw error;
+    }
+  }
 };
