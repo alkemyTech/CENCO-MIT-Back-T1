@@ -1,7 +1,8 @@
 import bcrypt from "bcrypt";
 import jwt from "jsonwebtoken";
 import { User } from "../models/user.js";
-import { JWT_SECRET, SALT_ROUNDS } from "../config/config.js";
+import { JWT_SECRET ,SALT_ROUNDS } from "../config/config.js";
+
 
 const validatePassword = (password) => (
   password.length >= 8 &&
@@ -12,6 +13,7 @@ const validatePassword = (password) => (
 );
 
 export const userService = {
+
   login: async (email, password) => {
     try {
       // Authenticate user by email and password
@@ -49,5 +51,5 @@ export const userService = {
 
     user.password = await bcrypt.hash(password, SALT_ROUNDS);
     return await User.create(user);
-  }
+  },
 };
