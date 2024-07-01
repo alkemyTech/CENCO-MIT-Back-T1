@@ -54,7 +54,7 @@ export const userController = {
         return res.status(400).json({ error: 'First name, last name, email, and password are required.' });
       }
 
-      const newUser = await userService.create({
+      await userService.create({
         firstName,
         lastName,
         email,
@@ -65,8 +65,7 @@ export const userController = {
         role
       });
 
-
-      res.status(201).json(newUser);
+      res.status(201).json({message: "User created successfully"});
     } catch (error) {
  
       if (error.message === "User already exists" ||
@@ -78,7 +77,7 @@ export const userController = {
         res.status(400).json({ error: error.message });
       } else {
         console.error(error); 
-        res.status(500).json({ error: 'Internal server error' });
+        res.status(500).json({ error: "Internal server error" });
       }
     }
   }
