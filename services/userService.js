@@ -6,6 +6,28 @@ import { validatePassword, validateEmail, validateName, validateDateFormat, vali
 
 export const userService = {
 
+  getUserInfo: async (userEmail) => {
+    try {
+      const user = await User.findOne({ where: { email: userEmail}, attributes: { exclude: ["password" ] } });
+      if (!user) {
+        throw new Error("User not found");
+      }
+      
+      return user;
+    } catch (error) {
+      console.error("Error getting user info:", error);
+      throw error;
+    }
+  },
+  getById: async (id) => {
+    try {
+      return await User.findByPk(id);
+    } catch (error) {
+      console.error("Error getting user by id:", error);
+      throw error;
+    }
+  },
+
   login: async (email, password) => {
     try {
       // Authenticate user by email and password
