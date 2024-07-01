@@ -2,6 +2,18 @@ import { userService } from '../services/userService.js';
 
 
 export const userController = {
+  getUserInfo: async (req, res) => {
+    try {
+      const email = req.user.email;
+      const user = await userService.getUserInfo(email);
+      res.status(200).json(user);
+    } catch (error) {
+      console.error("Error getting user info:", error);
+      res.status(500).json({ error: 'Internal server error' });
+    }
+
+
+  },
   getAll: async (req, res) => {
     console.log("getAll")
     try {
