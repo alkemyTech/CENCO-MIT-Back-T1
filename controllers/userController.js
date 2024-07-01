@@ -69,7 +69,12 @@ export const userController = {
       res.status(201).json(newUser);
     } catch (error) {
  
-      if (error.message === "User already exists" || error.message.includes("Password must be")) {
+      if (error.message === "User already exists" ||
+        error.message.includes("Invalid email format") ||
+        error.message.includes("Password must be") ||
+        error.message.includes("First name must be") ||
+        error.message.includes("Last name must be") || error.message.includes("Invalid date format") ||
+        error.message.includes("Must be 18 years of age or older")) {
         res.status(400).json({ error: error.message });
       } else {
         console.error(error); 

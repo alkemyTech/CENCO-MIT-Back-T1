@@ -2,15 +2,7 @@ import bcrypt from "bcrypt";
 import jwt from "jsonwebtoken";
 import { User } from "../models/user.js";
 import { JWT_SECRET ,SALT_ROUNDS } from "../config/config.js";
-
-
-const validatePassword = (password) => (
-  password.length >= 8 &&
-  /[A-Z]/.test(password) &&
-  /[a-z]/.test(password) &&
-  /\d/.test(password) &&
-  /[!@#$%^&*(),.?":{}|<>]/.test(password)
-);
+import { validatePassword, validateEmail, validateName, validateDateFormat, validateAge  } from "../utils/validationUtils.js";
 
 export const userService = {
 
@@ -38,9 +30,16 @@ export const userService = {
       throw error;
     }
   },
-  create: async ({ password, ...user }) => {
-    if (await User.findOne({ where: { email: user.email } })) {
+  create: async ({ password, email, firstName, lastName, birthdate, ...user }) => {
+    if (!email) {
+      throw new Error("Email is required");
+    }
+    if (await User.findOne({ where: { email: email } })) {
       throw new Error("User already exists");
+    }
+
+    if (!validateEmail(email)) {
+      throw new Error("Invalid email format");
     }
 
     if (!validatePassword(password)) {
@@ -49,7 +48,21 @@ export const userService = {
       );
     }
 
+    if (!validateName(firstName)) {
+      throw new Error("First name must be between 2 and 50 characters.");
+    }
+
+    if (!validateName(lastName)) {
+      throw new Error("Last name must be between 2 and 50 characters.");
+    }
+    if (!validateDateFormat(birthdate)) {
+      throw new Error("Invalid date format. Use YYYY-MM-DD.");
+    }
+    if (!validateAge(birthdate)) {
+      throw new Error("Must be 18 years of age or older");
+    }
+
     user.password = await bcrypt.hash(password, SALT_ROUNDS);
-    return await User.create(user);
+    return await User.create({ ...user, email, password: user.password, firstName, lastName, birthdate  });
   },
 };
