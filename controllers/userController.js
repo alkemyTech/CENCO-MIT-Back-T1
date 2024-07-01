@@ -50,11 +50,7 @@ export const userController = {
     try {
       const { firstName, lastName, email, password, phone, country, birthdate, role } = req.body;
 
-      if (!firstName || !lastName || !email || !password) {
-        return res.status(400).json({ error: 'First name, last name, email, and password are required.' });
-      }
-
-      const newUser = await userService.create({
+      await userService.create({
         firstName,
         lastName,
         email,
@@ -65,15 +61,20 @@ export const userController = {
         role
       });
 
-
-      res.status(201).json(newUser);
+      res.status(201).json({message: "User created successfully"});
     } catch (error) {
  
-      if (error.message === "User already exists" || error.message.includes("Password must be")) {
+      if (error.message === "User already exists" ||
+        error.message.includes("Invalid email format") ||
+        error.message.includes("Password must be") ||
+        error.message.includes("First name must be") ||
+        error.message.includes("Last name must be") || error.message.includes("Invalid date format") ||
+        error.message.includes("Must be 18 years of age or older") ||
+        error.message.includes("First name, last name, email, and password are required")) {
         res.status(400).json({ error: error.message });
       } else {
         console.error(error); 
-        res.status(500).json({ error: 'Internal server error' });
+        res.status(500).json({ error: "Internal server error" });
       }
     }
   }

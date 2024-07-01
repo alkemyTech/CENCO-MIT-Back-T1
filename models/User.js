@@ -34,7 +34,7 @@ export const User = db.define(
     },
     birthdate: {
       type: DataTypes.DATEONLY,
-      allowNull: true,
+      allowNull: false,
     },
     role: {
       type: DataTypes.STRING,
