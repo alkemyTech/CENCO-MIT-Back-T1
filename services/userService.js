@@ -31,6 +31,10 @@ export const userService = {
     }
   },
   create: async ({ password, email, firstName, lastName, birthdate, ...user }) => {
+    if (!firstName || !lastName || !email || !password) {
+      throw new Error('First name, last name, email, and password are required.');
+    }
+    
     if (!email) {
       throw new Error("Email is required");
     }
