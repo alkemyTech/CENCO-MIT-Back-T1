@@ -1,8 +1,7 @@
-
+import { Op } from "sequelize";
 import { User } from "../models/user.js";
 
 export const adminService = {
-
   isAdmin: async (user) => {
     try {
       const dbUser = await User.findOne({ where: { email: user.email } });
@@ -15,46 +14,61 @@ export const adminService = {
     }
   },
 
-  getUsers: (requestingUser) => {
-    // Assuming User is an array-like object or a database model with a .map method
-    return User.findAll() // Adjust this line if User is not a Sequelize model
-      .then(users => users.map(u => ({
-
-        firstName: u.firstName,
-        lastName: u.lastName,
-        email: u.email,
-        phone: u.phone,
-        country: u.country,
-        birthdate: u.birthdate,
-        role: u.role,
-
-
-      })))
-      .catch(error => {
-        // handle error
-        console.error('Error getting users:', error);
-        throw error;
-      });
-  },
-  //Filter users by country
-  filterByCountry: async (country) => {
+  getUsers: async (requestingUser) => {
     try {
-      const usersFoundByCountry = await User.findAll({ where: { country: country } });
-      // Loop through usersData array to determine which values to display
-      const usersData = usersFoundByCountry.map(u => ({
-        //returns only the necessary data
-        firstName: u.firstName,
-        lastName: u.lastName,
-        email: u.email,
-        phone: u.phone,
-        country: u.country,
-        birthdate: u.birthdate,
-        role: u.role,
-      }));
-      return usersData;
+      const users = await User.findAll({
+        attributes: [
+          "firstName",
+          "lastName",
+          "email",
+          "phone",
+          "country",
+          "birthdate",
+          "role",
+        ],
+      });
+      return users;
     } catch (error) {
-      console.error("Error filtering users by country:", error);
+      console.error("Error getting users:", error);
       throw error;
     }
-  }
+  },
+  // dynamic search by fields firstname, lastName, email, country for a more complex search if required
+  searchUsers: async (searchParams) => {
+    try {
+      const { firstName, lastName, email, country } = searchParams;
+      const whereClause = {};
+
+      if (firstName) {
+        whereClause.firstName = { [Op.like]: `${firstName}%` };
+      }
+      if (lastName) {
+        whereClause.lastName = { [Op.like]: `${lastName}%` };
+      }
+      if (email) {
+        whereClause.email = { [Op.like]: `${email}%` };
+      }
+      if (country) {
+        whereClause.country = { [Op.like]: `%${country}%` };
+      }
+
+      const usersFound = await User.findAll({
+        where: whereClause,
+        attributes: [
+          "firstName",
+          "lastName",
+          "email",
+          "phone",
+          "country",
+          "birthdate",
+          "role",
+        ],
+      });
+
+      return usersFound;
+    } catch (error) {
+      console.error("Error searching users:", error);
+      throw error;
+    }
+  },
 };
