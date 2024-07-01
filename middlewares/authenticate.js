@@ -9,7 +9,7 @@ export const authenticateToken = (req, res, next) => {
 
     if (!token) {
       return res.status(401).send({ message: "No access token provided" });
-Error al obtener usuarios    }
+    }
 
     const payload = jwt.verify(token, JWT_SECRET);
     req.user = payload;
