@@ -14,25 +14,24 @@ export const adminService = {
     }
   },
 
-  getUsers: (requestingUser) => {
-    // Assuming User is an array-like object or a database model with a .map method
-    return User.findAll() // Adjust this line if User is not a Sequelize model
-      .then((users) =>
-        users.map((u) => ({
-          firstName: u.firstName,
-          lastName: u.lastName,
-          email: u.email,
-          phone: u.phone,
-          country: u.country,
-          birthdate: u.birthdate,
-          role: u.role,
-        }))
-      )
-      .catch((error) => {
-        // handle error
-        console.error("Error getting users:", error);
-        throw error;
+  getUsers: async (requestingUser) => {
+    try {
+      const users = await User.findAll({
+        attributes: [
+          "firstName",
+          "lastName",
+          "email",
+          "phone",
+          "country",
+          "birthdate",
+          "role",
+        ],
       });
+      return users;
+    } catch (error) {
+      console.error("Error getting users:", error);
+      throw error;
+    }
   },
   // dynamic search by fields firstname, lastName, email, country for a more complex search if required
   searchUsers: async (searchParams) => {
@@ -53,7 +52,18 @@ export const adminService = {
         whereClause.country = { [Op.like]: `%${country}%` };
       }
 
-      const usersFound = await User.findAll({ where: whereClause });
+      const usersFound = await User.findAll({
+        where: whereClause,
+        attributes: [
+          "firstName",
+          "lastName",
+          "email",
+          "phone",
+          "country",
+          "birthdate",
+          "role",
+        ],
+      });
 
       return usersFound;
     } catch (error) {
