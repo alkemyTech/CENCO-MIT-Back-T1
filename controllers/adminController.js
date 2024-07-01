@@ -14,7 +14,7 @@ export const adminController = {
     },
     getUsersByCountry: async function (req, res) {
       //We get the country from the body
-      const { country } = req.body;
+      const { country } = req.params;
       try {
           const users = await adminService.filterByCountry(country);
           res.status(200).send({ message: `Found ${users.length} users.`, data: { users } })
