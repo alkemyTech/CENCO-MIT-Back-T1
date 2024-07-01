@@ -11,26 +11,11 @@ export const adminController = {
       res.status(500).json({ error: "Internal server error" });
     }
   },
-  getUsersByCountry: async function (req, res) {
-    //We get the country from the body
-    const { country } = req.params;
-    try {
-      const users = await adminService.filterByCountry(country);
-      res
-        .status(200)
-        .send({ message: `Found ${users.length} users.`, data: { users } });
-    } catch (error) {
-      console.error("Error filtering users by country:", error);
-      return res
-        .status(400)
-        .send({ message: "Error filtering users by country." });
-    }
-  },
   searchUsers: async (req, res) => {
-    const { firstName, lastName, email } = req.query;
+    const { firstName, lastName, email, country } = req.query;
 
     try {
-      const searchParams = { firstName, lastName, email };
+      const searchParams = { firstName, lastName, email, country };
       const users = await adminService.searchUsers(searchParams);
       res
         .status(200)

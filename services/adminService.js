@@ -34,32 +34,10 @@ export const adminService = {
         throw error;
       });
   },
-  //Filter users by country
-  filterByCountry: async (country) => {
-    try {
-      const usersFoundByCountry = await User.findAll({
-        where: { country: country },
-      });
-      // Loop through usersData array to determine which values to display
-      const usersData = usersFoundByCountry.map((u) => ({
-        //returns only the necessary data
-        firstName: u.firstName,
-        lastName: u.lastName,
-        email: u.email,
-        phone: u.phone,
-        country: u.country,
-        birthdate: u.birthdate,
-        role: u.role,
-      }));
-      return usersData;
-    } catch (error) {
-      console.error("Error filtering users by country:", error);
-      throw error;
-    }
-  },
+  // dynamic search by fields firstname, lastName, email, country for a more complex search if required
   searchUsers: async (searchParams) => {
     try {
-      const { firstName, lastName, email } = searchParams;
+      const { firstName, lastName, email, country } = searchParams;
       const whereClause = {};
 
       if (firstName) {
@@ -70,6 +48,9 @@ export const adminService = {
       }
       if (email) {
         whereClause.email = { [Op.like]: `${email}%` };
+      }
+      if (country) {
+        whereClause.country = { [Op.like]: `%${country}%` };
       }
 
       const usersFound = await User.findAll({ where: whereClause });
