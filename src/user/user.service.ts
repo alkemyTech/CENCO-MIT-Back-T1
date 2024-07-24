@@ -32,7 +32,7 @@ export class UserService {
       phone,
       country,
       birthday,
-      role: role as Role,
+      role: role || Role.USER,
     });
 
     return this.userRepository.save(user);
