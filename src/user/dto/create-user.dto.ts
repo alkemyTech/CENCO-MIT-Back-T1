@@ -1,4 +1,13 @@
-import { IsString, IsEmail, IsNotEmpty, IsOptional, IsEnum, MinLength, MaxLength, IsDateString } from 'class-validator';
+import {
+  IsString,
+  IsEmail,
+  IsNotEmpty,
+  IsOptional,
+  IsEnum,
+  MinLength,
+  MaxLength,
+  IsDateString,
+} from 'class-validator';
 import { IsStrongPassword, IsAdult } from '../../validators';
 import { Role } from '../entities/role.enum';
 
@@ -8,6 +17,9 @@ export class CreateUserDto {
   @MinLength(2)
   @MaxLength(50)
   name: string;
+
+  @IsNotEmpty()
+  rut: string;
 
   @IsNotEmpty()
   @IsEmail()
