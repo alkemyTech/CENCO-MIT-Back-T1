@@ -16,18 +16,21 @@ async function bootstrap() {
   );
 
   const userService = app.get(UserService);
+  const userEmail = 'admin@admin.cl';
+  const existingUser = await userService.findByEmail(userEmail);
 
-  // COMMENT THIS
-  const userDTO: CreateUserDto = {
-    name: 'Admin',
-    rut: '11.111.111-1',
-    email: 'admin@admin.cl',
-    password: 'Admin',
-    role: Role.ADMIN,
-  };
-  const user = await userService.create(userDTO);
-  console.log('Inserted user:', user);
-  console.log('YOU MUST COMMENT THIS LINES IN main.ts');
+  if (!existingUser) {
+    const userDTO: CreateUserDto = {
+      name: 'Admin',
+      rut: '11.111.111-1',
+      email: userEmail,
+      password: 'Admin',
+      role: Role.ADMIN,
+    };
+
+    const admin = await userService.create(userDTO);
+    console.log('Inserted admin:', admin);
+  }
 
   await app.listen(3000);
 }
