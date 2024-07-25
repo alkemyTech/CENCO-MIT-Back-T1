@@ -8,10 +8,10 @@ import config from 'config/config';
 import { databaseConfig } from './database/database';
 import { RateLimiterMiddleware } from './middlewares/rate-limiter.middleware';
 import { WinstonModule } from 'nest-winston';
-import { winstonConfig } from './winston-logger/wiston-config';
+import { winstonConfig } from './winston/wiston-config';
 import { LoggingMiddleware } from './middlewares/logging.middleware';
 import { APP_INTERCEPTOR } from '@nestjs/core';
-import { ResponseInterceptor } from './winston-logger/response.interceptor';
+import { ResponseInterceptor } from './interceptors/response.interceptor';
 
 @Module({
   imports: [
