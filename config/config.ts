@@ -7,4 +7,8 @@ export default () => ({
     username: process.env.USERNAMEDB,
     password: process.env.PASSWORD,
   },
+  rateLimit: {
+    windowMs: parseInt(process.env.RATE_LIMIT_WINDOW_MS, 10) || 60000,
+    maxRequests: parseInt(process.env.RATE_LIMIT_MAX_REQUESTS, 10) || 5,
+  },
 });
