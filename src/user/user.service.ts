@@ -72,14 +72,12 @@ export class UserService {
     }
 
     // If everithing is ok, returns a token signed with the role and the jwt_secret defined in an .env file
-    return this.jwtServ.sign(
-      {
-        role: userFoundByEmail.role,
-      },
-      {
-        secret: this.configService.get<string>('JWT_SECRET')
-      },
-    );
+    return this.jwtServ.sign({
+      role: userFoundByEmail.role,
+    }, {
+      secret: this.configService.get<string>('JWT_SECRET'),
+      expiresIn: '1h',
+    });
   }
 
 
