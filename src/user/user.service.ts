@@ -1,4 +1,4 @@
-import { ConflictException, HttpException, HttpStatus, Injectable } from '@nestjs/common';
+import { BadRequestException, ConflictException, HttpException, HttpStatus, Injectable } from '@nestjs/common';
 import { CreateUserDto } from './dto/create-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
 import { InjectRepository } from '@nestjs/typeorm';
@@ -60,7 +60,7 @@ export class UserService {
 
     if (!userFoundByEmail) {
       // if the email doesn't exists, throw a bad request exception
-      throw new HttpException("The user doesn't exists", HttpStatus.BAD_REQUEST);
+      throw new BadRequestException("The user doesn't exists")
     }
 
     // Verify password
