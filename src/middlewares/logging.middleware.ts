@@ -8,30 +8,30 @@ import { Logger } from 'winston';
 @Injectable()
 export class LoggingMiddleware implements NestMiddleware {
   constructor(
-    @Inject(WINSTON_MODULE_PROVIDER) private readonly logger: Logger, // Inyectar el logger de Winston
+    @Inject(WINSTON_MODULE_PROVIDER) private readonly logger: Logger,
   ) {}
 
   use(req: Request, res: Response, next: NextFunction): void {
-    const { method, originalUrl } = req; // Obtener el método y la URL original de la petición
-    const start = Date.now(); // Marcar el tiempo de inicio
+    const { method, originalUrl } = req;
+    const start = Date.now();
 
     res.on('finish', () => {
-      const { statusCode, statusMessage } = res; // Obtener el código de estado de la respuesta
-      const duration = Date.now() - start; // Calcular la duración de la petición
+      const { statusCode, statusMessage } = res;
+      const duration = Date.now() - start; // Calculate request duration
 
-      // Formatear la marca de tiempo
+      // Format time
       const timestamp = format(new Date(), 'dd-MM-yyyy, p', { locale: es });
 
-      // Obtener el mensaje de respuesta y de error desde response.locals
+      // Obtain response and error message from response.locals
       const responseMessage = res.locals.message || 'No response message';
 
-      // Definir colores personalizados
+      // Define personalize colors
       const colors = {
-        message: '\x1b[32m', // Verde
-        status: '\x1b[34m', // Azul
-        took: '\x1b[36m', // Cian
-        request: '\x1b[33m', // Amarillo
-        reset: '\x1b[0m', // Restablecer color
+        message: '\x1b[32m',
+        status: '\x1b[34m',
+        took: '\x1b[36m',
+        request: '\x1b[33m',
+        reset: '\x1b[0m',
       };
 
       // Mensaje de log con la información de la petición y respuesta
