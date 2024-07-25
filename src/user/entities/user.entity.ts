@@ -10,6 +10,9 @@ export class User {
   name: string;
 
   @Column({ unique: true })
+  rut: string;
+
+  @Column({ unique: true })
   email: string;
 
   @Column()
@@ -30,4 +33,7 @@ export class User {
 
   @Column({ nullable: true })
   country?: string;
+
+  @Column({ default: false })
+  isDeleted: boolean;
 }

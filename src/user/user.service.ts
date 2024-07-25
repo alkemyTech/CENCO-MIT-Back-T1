@@ -19,10 +19,19 @@ export class UserService {
     private readonly configService: ConfigService
   ) { }
 
-  async create(createUserDto: CreateUserDto): Promise<User> {
-    const { password, email, name, phone, country, birthday, role } = createUserDto;
+  async findByEmail(email: string): Promise<User | undefined> {
+    return this.userRepository.findOne({ where: { email } });
+  }
 
-    const existingUser = await this.userRepository.findOne({ where: { email } });
+  async create(createUserDto: CreateUserDto): Promise<User> {
+
+    const { password, email, name, rut, phone, country, birthday, role } =
+      createUserDto;
+
+    const existingUser = await this.userRepository.findOne({
+      where: { email },
+    });
+
     if (existingUser) {
       throw new ConflictException('Email is already registered');
     }
@@ -32,6 +41,7 @@ export class UserService {
 
     const user = this.userRepository.create({
       name,
+      rut,
       email,
       password: hashedPassword,
       phone,
