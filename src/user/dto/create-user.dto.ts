@@ -10,6 +10,7 @@ import {
 } from 'class-validator';
 import { IsStrongPassword, IsAdult } from '../../validators';
 import { Role } from '../entities/role.enum';
+import { IsInEnum } from 'src/decorators/role-validator.decorator';
 
 export class CreateUserDto {
   @IsNotEmpty()
@@ -44,6 +45,6 @@ export class CreateUserDto {
   birthday?: string;
 
   @IsOptional()
-  @IsEnum(Role)
+  @IsInEnum(Role)
   role?: Role;
 }
