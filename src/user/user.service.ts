@@ -44,6 +44,12 @@ export class UserService {
         select: ['id', 'email', 'name', 'phone', 'country', 'birthday', 'role'],
     });
 }
+  async findAll(): Promise<User[]> {
+      return this.userRepository.find({
+          select: ['id', 'email', 'name', 'phone', 'country', 'birthday', 'role'],
+      });
+
+  }
 
   async create(createUserDto: CreateUserDto): Promise<User> {
 
@@ -103,9 +109,7 @@ export class UserService {
   }
 
 
-  findAll() {
-    return `This action returns all user`;
-  }
+
 
   findOne(id: number) {
     return `This action returns a #${id} user`;

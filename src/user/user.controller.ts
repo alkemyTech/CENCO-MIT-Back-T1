@@ -39,7 +39,7 @@ export class UserController {
   }
   
 
-@Get(':id')
+//@Get(':id')
 findOne(@Param('id') id: string) {
   const numericId = Number(id);
   if (isNaN(numericId) || numericId <= 0) {
@@ -48,8 +48,16 @@ findOne(@Param('id') id: string) {
   return this.userService.findOne(numericId);
 }
   
-  @Get()
-  findAll() {
+  @Get('all')
+  @UseGuards(JwtAuthGuard)
+  findAll(@Req() req: Request & { user: any }) {
+    console.log(req.user);
+    if (!req.user) {
+      throw new BadRequestException('Invalid user data.');
+    }
+    if (req.user.role !== 'admin') {
+      throw new UnauthorizedException('You do not have permission to access this resource.');
+    }
     return this.userService.findAll();
   }
 
