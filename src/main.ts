@@ -5,6 +5,7 @@ import { HttpExceptionFilter } from './exceptionFilter/http-exception.filter';
 import { UserService } from './user/user.service';
 import { CreateUserDto } from './user/dto/create-user.dto';
 import { Role } from './user/entities/role.enum';
+import { ConfigService } from '@nestjs/config';
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
@@ -16,7 +17,7 @@ async function bootstrap() {
       transform: true,
       exceptionFactory: (errors) => {
         return new BadRequestException(
-          errors.map(error => ({
+          errors.map((error) => ({
             field: error.property,
             errors: Object.values(error.constraints),
           })),
@@ -27,16 +28,18 @@ async function bootstrap() {
 
   app.useGlobalFilters(new HttpExceptionFilter());
 
+  const configService = app.get(ConfigService);
   const userService = app.get(UserService);
-  const userEmail = 'admin@admin.cl';
+
+  const userEmail = configService.get<string>('defaultAdmin.email');
   const existingUser = await userService.findByEmail(userEmail);
 
   if (!existingUser) {
     const userDTO: CreateUserDto = {
-      name: 'Admin',
-      rut: '11.111.111-1',
+      name: configService.get<string>('defaultAdmin.name'),
+      rut: configService.get<string>('defaultAdmin.rut'),
       email: userEmail,
-      password: 'Admin',
+      password: configService.get<string>('defaultAdmin.password'),
       role: Role.ADMIN,
     };
 
