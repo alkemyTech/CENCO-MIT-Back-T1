@@ -1,8 +1,11 @@
-import { Controller, Get, Post, Body, Patch, Param, Delete, UnauthorizedException } from '@nestjs/common';
+import { Controller, Get, Post, Body, Patch, Param, Delete, UnauthorizedException, UseGuards } from '@nestjs/common';
 import { UserService } from './user.service';
 import { CreateUserDto } from './dto/create-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
 import { LoginDto } from './dto/login-user.dto';
+import { Role } from './entities/role.enum';
+import { Roles } from 'src/decorators/has-roles.decorator';
+import { RolesGuard } from 'src/guards/role.guard';
 
 @Controller('user')
 export class UserController {
@@ -36,9 +39,13 @@ export class UserController {
     return this.userService.findOne(+id);
   }
 
-  @Patch(':id')
-  update(@Param('id') id: string, @Body() updateUserDto: UpdateUserDto) {
-    return this.userService.update(+id, updateUserDto);
+  @Roles(Role.ADMIN)
+  @UseGuards(
+    RolesGuard
+  )
+  @Patch(':rut')
+  update(@Param('rut') rut: string, @Body() updateUserDto: UpdateUserDto) {
+    return this.userService.update(rut, updateUserDto);
   }
 
   @Delete(':id')
