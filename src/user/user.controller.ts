@@ -6,6 +6,9 @@ import { LoginDto } from './dto/login-user.dto';
 import { Request } from 'express';
 import { UseGuards } from '@nestjs/common';
 import { JwtAuthGuard } from '../guards/jwt-auth.guard';
+import { RolesGuard } from 'src/guards/role.guard';
+import { Roles } from 'src/decorators/has-roles.decorator';
+import { Role } from './entities/role.enum';
 
 @Controller('user')
 export class UserController {
@@ -49,15 +52,10 @@ findOne(@Param('id') id: string) {
 }
   
   @Get('all')
-  @UseGuards(JwtAuthGuard)
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles(Role.ADMIN)
   findAll(@Req() req: Request & { user: any }) {
-    console.log(req.user);
-    if (!req.user) {
-      throw new BadRequestException('Invalid user data.');
-    }
-    if (req.user.role !== 'admin') {
-      throw new UnauthorizedException('You do not have permission to access this resource.');
-    }
+    
     return this.userService.findAll();
   }
 
