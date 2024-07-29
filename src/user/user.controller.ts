@@ -11,6 +11,7 @@ import { Roles } from 'src/decorators/has-roles.decorator';
 import { Role } from './entities/role.enum';
 import { find } from 'rxjs';
 import { GetUserDto } from './dto/get-user.dto';
+import { User } from './entities/user.entity';
 
 @Controller('user')
 export class UserController {
@@ -36,7 +37,7 @@ export class UserController {
 
   @Get('profile')
   @UseGuards(JwtAuthGuard)
-  async getProfile(@Req() req: Request & { user: any }) {
+  async getProfile(@Req() req: Request & { user: User }) {
     if (!req.user || !req.body.email) {
       throw new BadRequestException('Invalid user data.');
     }
@@ -55,7 +56,7 @@ export class UserController {
   @Get('all')
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles(Role.ADMIN)
-  findAll(@Req() req: Request & { user: any }) {
+  findAll(@Req() req: Request & { user: User}) {
     
     return this.userService.findAll();
   }
