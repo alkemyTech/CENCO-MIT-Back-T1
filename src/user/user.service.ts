@@ -1,4 +1,4 @@
-import { ConflictException, Injectable, InternalServerErrorException, NotFoundException, UseGuards, HttpException,HttpStatus} from '@nestjs/common';
+import { ConflictException, Injectable, InternalServerErrorException, NotFoundException, UseGuards, HttpException,HttpStatus,UnauthorizedException} from '@nestjs/common';
 import { CreateUserDto } from './dto/create-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
 import { InjectRepository } from '@nestjs/typeorm';
@@ -24,18 +24,21 @@ export class UserService {
 
   async findUserById(id: number): Promise<User | undefined> {
     if (id <= 0) {
-        throw new Error('El ID debe ser un número positivo.');
+        throw new Error('The ID must be a positive number.');
     }
     try {
-        const user = await this.userRepository.findOne({ where: { id } });
+        const user = await this.userRepository.findOne({
+           where: { id }, 
+           select: ['id', 'email', 'name', 'phone', 'country', 'birthday', 'role'] 
+        });
         if (!user) {
           
             return undefined;
         }
         return user;
     } catch (error) {
-        console.error('Error al buscar el usuario:', error);
-        throw new Error('Error al buscar el usuario.');
+        console.error('Error fetching the user.:', error);
+        throw new Error('Error fetching the user.');
     }
 }
   async MyProfile(id: number): Promise<User | undefined> {
@@ -54,35 +57,53 @@ export class UserService {
 
   }
 
-  async create(createUserDto: CreateUserDto): Promise<User> {
+ // Checks if a user with the given email or RUT already exists and if so throws an exception.
+ private async checkIfUserExists(email: string, rut: string): Promise<void> {
+  const existingUser = await this.userRepository.findOne({ 
+    where: [{ email }, { rut }] 
+  });
 
-    const { password, email, name, rut, phone, country, birthday, role } =
-      createUserDto;
-
-    const existingUser = await this.userRepository.findOne({
-      where: { email },
-    });
-
-    if (existingUser) {
+  if (existingUser) {
+    if (existingUser.email === email) {
       throw new ConflictException('Email is already registered');
+    } 
+    if (existingUser.rut === rut) {
+      throw new ConflictException('RUT is already registered');
     }
-
-    const salt = await bcrypt.genSalt();
-    const hashedPassword = await bcrypt.hash(password, salt);
-
-    const user = this.userRepository.create({
-      name,
-      rut,
-      email,
-      password: hashedPassword,
-      phone,
-      country,
-      birthday,
-      role: role || Role.USER,
-    });
-
-    return this.userRepository.save(user);
   }
+}
+
+// Hash the provided password using bcrypt 
+private async hashPassword(password: string): Promise<string> {
+  const salt = await bcrypt.genSalt();
+  return bcrypt.hash(password, salt);
+}
+
+// Create a new user, only if the creator is an admin, ensuring unique email and RUT, and hashing the password
+async create(createUserDto: CreateUserDto, creator?: User): Promise<User> {
+  if (creator && creator.role !== Role.ADMIN) {
+    throw new UnauthorizedException('Only admins can create new users');
+  }
+
+  const { password, email, name, rut, phone, country, birthday, role } = createUserDto;
+
+  await this.checkIfUserExists(email, rut);
+
+  const hashedPassword = await this.hashPassword(password);
+
+  const user = this.userRepository.create({
+    name,
+    rut,
+    email,
+    password: hashedPassword,
+    phone,
+    country,
+    birthday,
+    role: role || Role.USER,
+  });
+
+  return this.userRepository.save(user);
+}
 
   async login(loginDto: LoginDto) {
     const { password, email } = loginDto;
