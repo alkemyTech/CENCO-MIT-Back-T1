@@ -1,4 +1,4 @@
-import { ConflictException, Injectable, InternalServerErrorException, NotFoundException, UseGuards, HttpException,HttpStatus} from '@nestjs/common';
+import { ConflictException, Injectable, InternalServerErrorException, NotFoundException, UseGuards, HttpException,HttpStatus, UnauthorizedException} from '@nestjs/common';
 import { CreateUserDto } from './dto/create-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
 import { InjectRepository } from '@nestjs/typeorm';
@@ -91,7 +91,7 @@ export class UserService {
 
     if (!existingUser) {
       // if the email doesn't exists, throw a bad request exception
-      throw new HttpException("The user doesn't exists", HttpStatus.BAD_REQUEST);
+      throw new NotFoundException("The user doesn't exist");
     }
 
     // Verify password
@@ -99,7 +99,7 @@ export class UserService {
 
     if (!verifyPassword) {
       // if the password doesn't match, throw a new error with a message of invalid credentials
-      throw new Error("Invalid credentials");
+      throw new UnauthorizedException("Invalid credentials");
     }
 
     // If everithing is ok, returns a token signed with the role and the jwt_secret defined in an .env file
@@ -110,9 +110,6 @@ export class UserService {
       expiresIn: '1h',
     });
   }
-
-
-
 
   findOne(id: number) {
     return `This action returns a #${id} user`;
