@@ -1,4 +1,4 @@
-import { ConflictException, HttpException, HttpStatus, Injectable } from '@nestjs/common';
+import { ConflictException, HttpException, HttpStatus, Injectable, UnauthorizedException } from '@nestjs/common';
 import { CreateUserDto } from './dto/create-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
 import { InjectRepository } from '@nestjs/typeorm';
@@ -51,35 +51,53 @@ export class UserService {
 
   }
 
-  async create(createUserDto: CreateUserDto): Promise<User> {
+ // Checks if a user with the given email or RUT already exists and if so throws an exception.
+ private async checkIfUserExists(email: string, rut: string): Promise<void> {
+  const existingUser = await this.userRepository.findOne({ 
+    where: [{ email }, { rut }] 
+  });
 
-    const { password, email, name, rut, phone, country, birthday, role } =
-      createUserDto;
-
-    const existingUser = await this.userRepository.findOne({
-      where: { email },
-    });
-
-    if (existingUser) {
+  if (existingUser) {
+    if (existingUser.email === email) {
       throw new ConflictException('Email is already registered');
+    } 
+    if (existingUser.rut === rut) {
+      throw new ConflictException('RUT is already registered');
     }
-
-    const salt = await bcrypt.genSalt();
-    const hashedPassword = await bcrypt.hash(password, salt);
-
-    const user = this.userRepository.create({
-      name,
-      rut,
-      email,
-      password: hashedPassword,
-      phone,
-      country,
-      birthday,
-      role: role || Role.USER,
-    });
-
-    return this.userRepository.save(user);
   }
+}
+
+// Hash the provided password using bcrypt 
+private async hashPassword(password: string): Promise<string> {
+  const salt = await bcrypt.genSalt();
+  return bcrypt.hash(password, salt);
+}
+
+// Create a new user, only if the creator is an admin, ensuring unique email and RUT, and hashing the password
+async create(createUserDto: CreateUserDto, creator?: User): Promise<User> {
+  if (creator && creator.role !== Role.ADMIN) {
+    throw new UnauthorizedException('Only admins can create new users');
+  }
+
+  const { password, email, name, rut, phone, country, birthday, role } = createUserDto;
+
+  await this.checkIfUserExists(email, rut);
+
+  const hashedPassword = await this.hashPassword(password);
+
+  const user = this.userRepository.create({
+    name,
+    rut,
+    email,
+    password: hashedPassword,
+    phone,
+    country,
+    birthday,
+    role: role || Role.USER,
+  });
+
+  return this.userRepository.save(user);
+}
 
   async login(loginDto: LoginDto) {
     const { password, email } = loginDto;

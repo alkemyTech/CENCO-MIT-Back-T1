@@ -15,8 +15,10 @@ export class UserController {
   constructor(private readonly userService: UserService) { }
 
   @Post('signup')
-  async create(@Body() createUserDto: CreateUserDto): Promise<{ message: string }> {
-    await this.userService.create(createUserDto);
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles(Role.ADMIN)
+  async create(@Body() createUserDto: CreateUserDto, @Req() req: Request): Promise<{ message: string }> {
+    await this.userService.create(createUserDto, req.user);
     return { message: 'User successfully created' };
   }
 
