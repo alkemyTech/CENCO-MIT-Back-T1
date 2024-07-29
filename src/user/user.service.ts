@@ -21,18 +21,21 @@ export class UserService {
 
   async findUserById(id: number): Promise<User | undefined> {
     if (id <= 0) {
-        throw new Error('El ID debe ser un número positivo.');
+        throw new Error('The ID must be a positive number.');
     }
     try {
-        const user = await this.userRepository.findOne({ where: { id } });
+        const user = await this.userRepository.findOne({
+           where: { id }, 
+           select: ['id', 'email', 'name', 'phone', 'country', 'birthday', 'role'] 
+        });
         if (!user) {
           
             return undefined;
         }
         return user;
     } catch (error) {
-        console.error('Error al buscar el usuario:', error);
-        throw new Error('Error al buscar el usuario.');
+        console.error('Error fetching the user.:', error);
+        throw new Error('Error fetching the user.');
     }
 }
   async MyProfile(id: number): Promise<User | undefined> {
