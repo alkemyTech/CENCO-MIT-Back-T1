@@ -1,4 +1,4 @@
-import { Controller, Get, Post, Body, Patch, Param, Delete, UnauthorizedException, Req, BadRequestException } from '@nestjs/common';
+import { Controller, Get, Post, Body, Patch, Param, Delete, UnauthorizedException, Req, BadRequestException, UsePipes, ValidationPipe } from '@nestjs/common';
 import { UserService } from './user.service';
 import { CreateUserDto } from './dto/create-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
@@ -9,6 +9,9 @@ import { JwtAuthGuard } from '../guards/jwt-auth.guard';
 import { RolesGuard } from 'src/guards/role.guard';
 import { Roles } from 'src/decorators/has-roles.decorator';
 import { Role } from './entities/role.enum';
+import { find } from 'rxjs';
+import { GetUserDto } from './dto/get-user.dto';
+import { User } from './entities/user.entity';
 
 @Controller('user')
 export class UserController {
@@ -34,7 +37,7 @@ export class UserController {
 
   @Get('profile')
   @UseGuards(JwtAuthGuard)
-  async getProfile(@Req() req: Request & { user: any }) {
+  async getProfile(@Req() req: Request & { user: User }) {
     if (!req.user || !req.body.email) {
       throw new BadRequestException('Invalid user data.');
     }
@@ -42,19 +45,18 @@ export class UserController {
   }
   
 
-//@Get(':id')
-findOne(@Param('id') id: string) {
-  const numericId = Number(id);
-  if (isNaN(numericId) || numericId <= 0) {
-    throw new BadRequestException('The ID must be a positive number.');
+@Get('profiles/:id')
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles(Role.ADMIN)
+  @UsePipes(new ValidationPipe({ transform: true }))
+  findOne(@Param() params: GetUserDto) {
+    return this.userService.findUserById(params.id);
   }
-  return this.userService.findOne(numericId);
-}
-  
+
   @Get('all')
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles(Role.ADMIN)
-  findAll(@Req() req: Request & { user: any }) {
+  findAll(@Req() req: Request & { user: User}) {
     
     return this.userService.findAll();
   }
