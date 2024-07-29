@@ -1,4 +1,4 @@
-import { ConflictException, Injectable, InternalServerErrorException, NotFoundException } from '@nestjs/common';
+import { ConflictException, Injectable, InternalServerErrorException, NotFoundException, UseGuards } from '@nestjs/common';
 import { CreateUserDto } from './dto/create-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
 import { InjectRepository } from '@nestjs/typeorm';
@@ -9,6 +9,9 @@ import { Role } from './entities/role.enum';
 import { LoginDto } from './dto/login-user.dto';
 import { JwtService } from '@nestjs/jwt';
 import { ConfigService } from '@nestjs/config';
+import { RolesGuard } from 'src/guards/role.guard';
+import { JwtAuthGuard } from 'src/guards/jwt-auth.guard';
+import { Roles } from 'src/decorators/has-roles.decorator';
 
 @Injectable()
 export class UserService {
@@ -88,7 +91,6 @@ export class UserService {
   findOne(id: number) {
     return `This action returns a #${id} user`;
   }
-
 
   async update(rut: string, updateUserDto: UpdateUserDto) {
 

@@ -6,6 +6,7 @@ import { LoginDto } from './dto/login-user.dto';
 import { Role } from './entities/role.enum';
 import { Roles } from 'src/decorators/has-roles.decorator';
 import { RolesGuard } from 'src/guards/role.guard';
+import { JwtAuthGuard } from 'src/guards/jwt-auth.guard';
 
 @Controller('user')
 export class UserController {
@@ -41,6 +42,7 @@ export class UserController {
 
   @Roles(Role.ADMIN)
   @UseGuards(
+    JwtAuthGuard,
     RolesGuard
   )
   @Patch(':rut')
