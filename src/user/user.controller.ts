@@ -1,4 +1,4 @@
-import { Controller, Get, Post, Body, Patch, Param, Delete, UnauthorizedException, Req, BadRequestException, UsePipes, ValidationPipe } from '@nestjs/common';
+import { Controller, Get, Post, Body, Patch, Param, Delete, UnauthorizedException, Req, BadRequestException, UsePipes, ValidationPipe, Query, Res, HttpStatus } from '@nestjs/common';
 import { UserService } from './user.service';
 import { CreateUserDto } from './dto/create-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
@@ -12,6 +12,7 @@ import { Role } from './entities/role.enum';
 import { find } from 'rxjs';
 import { GetUserDto } from './dto/get-user.dto';
 import { User } from './entities/user.entity';
+import { SearchUserDto } from './dto/seach-user.dto';
 
 @Controller('user')
 export class UserController {
@@ -45,9 +46,9 @@ export class UserController {
     }
     return this.userService.findByEmail(req.body.email);
   }
-  
 
-@Get('profiles/:id')
+
+  @Get('profiles/:id')
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles(Role.ADMIN)
   @UsePipes(new ValidationPipe({ transform: true }))
@@ -58,8 +59,8 @@ export class UserController {
   @Get('all')
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles(Role.ADMIN)
-  findAll(@Req() req: Request & { user: User}) {
-    
+  findAll(@Req() req: Request & { user: User }) {
+
     return this.userService.findAll();
   }
 
@@ -71,6 +72,24 @@ export class UserController {
   @Patch(':rut')
   update(@Param('rut') rut: string, @Body() updateUserDto: UpdateUserDto) {
     return this.userService.update(rut, updateUserDto);
+  }
+
+  @Roles(Role.ADMIN)
+  @UseGuards(
+    JwtAuthGuard,
+    RolesGuard
+  )
+  @Get('searchUsers')
+  async searchUsers(@Query() query: SearchUserDto) {
+    try {
+      const users = await this.userService.searchUsers(query);
+      return {
+        message: `Found ${users.length} users`,
+        data: { users },
+      };
+    } catch (error) {
+      throw new BadRequestException('Error searching users');
+    }
   }
 
   @Delete(':id')
