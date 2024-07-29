@@ -69,9 +69,13 @@ export class UserController {
     JwtAuthGuard,
     RolesGuard
   )
-  @Patch(':rut')
-  update(@Param('rut') rut: string, @Body() updateUserDto: UpdateUserDto) {
-    return this.userService.update(rut, updateUserDto);
+  @Patch('update')
+  update(@Query('rut') rut: string, @Body() updateUserDto: UpdateUserDto) {
+    try {
+      return this.userService.update(rut, updateUserDto);
+    } catch (error) {
+      throw new BadRequestException("Error updating user")
+    }
   }
 
   @Roles(Role.ADMIN)

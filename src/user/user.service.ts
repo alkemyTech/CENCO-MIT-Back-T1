@@ -144,11 +144,25 @@ export class UserService {
       throw new NotFoundException("The user doesn't exist");
     }
 
-    existingUser.name = name;
-    existingUser.email = email;
+    if (name) {
+      existingUser.name = name;
+    }
+
+    if (email) {
+      existingUser.email = email;
+    }
 
     try {
-      return this.userRepository.save(existingUser);
+      await this.userRepository.save(existingUser);
+      return {
+        statusCode: HttpStatus.OK,
+        message: 'User updated successfully',
+        data: {
+          //If name or email is in the body, we show it in the data
+          ...(name ? { name: name } : {}),  
+          ...(email ? { email: email } : {})
+        }
+      };
     } catch (error) {
       throw new InternalServerErrorException("Failed to update user");
     }
@@ -173,10 +187,10 @@ export class UserService {
       if (country) {
         queryOptions.where['country'] = Like(`%${country}%`);
       }
-      
+
       const users = await this.userRepository.find(queryOptions);
 
-      if(users.length <= 0) {
+      if (users.length <= 0) {
         return await this.findAll();
       }
 
