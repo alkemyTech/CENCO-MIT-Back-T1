@@ -1,4 +1,4 @@
-import { BadRequestException, ConflictException, HttpException, HttpStatus, Injectable, NotFoundException } from '@nestjs/common';
+import { ConflictException, HttpException, HttpStatus, Injectable } from '@nestjs/common';
 import { CreateUserDto } from './dto/create-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
 import { InjectRepository } from '@nestjs/typeorm';
@@ -19,8 +19,36 @@ export class UserService {
     private readonly configService: ConfigService
   ) { }
 
+  async findUserById(id: number): Promise<User | undefined> {
+    if (id <= 0) {
+        throw new Error('El ID debe ser un número positivo.');
+    }
+    try {
+        const user = await this.userRepository.findOne({ where: { id } });
+        if (!user) {
+          
+            return undefined;
+        }
+        return user;
+    } catch (error) {
+        console.error('Error al buscar el usuario:', error);
+        throw new Error('Error al buscar el usuario.');
+    }
+}
+  async MyProfile(id: number): Promise<User | undefined> {
+    return this.userRepository.findOne({ where: { id } });
+  }
   async findByEmail(email: string): Promise<User | undefined> {
-    return this.userRepository.findOne({ where: { email } });
+    return this.userRepository.findOne({
+        where: { email },
+        select: ['id', 'email', 'name', 'phone', 'country', 'birthday', 'role'],
+    });
+}
+  async findAll(): Promise<User[]> {
+      return this.userRepository.find({
+          select: ['id', 'email', 'name', 'phone', 'country', 'birthday', 'role'],
+      });
+
   }
 
   async create(createUserDto: CreateUserDto): Promise<User> {
@@ -60,7 +88,7 @@ export class UserService {
 
     if (!userFoundByEmail) {
       // if the email doesn't exists, throw a bad request exception
-      throw new NotFoundException("The user doesn't exists")
+      throw new HttpException("The user doesn't exists", HttpStatus.BAD_REQUEST);
     }
 
     // Verify password
@@ -81,9 +109,7 @@ export class UserService {
   }
 
 
-  findAll() {
-    return `This action returns all user`;
-  }
+
 
   findOne(id: number) {
     return `This action returns a #${id} user`;
@@ -96,6 +122,8 @@ export class UserService {
   remove(id: number) {
     return `This action removes a #${id} user`;
   }
+  
+
 
 
 }
