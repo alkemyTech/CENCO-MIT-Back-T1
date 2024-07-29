@@ -42,20 +42,30 @@ export class UserService {
     }
 }
   async MyProfile(id: number): Promise<User | undefined> {
-    return this.userRepository.findOne({ where: { id } });
+    return this.userRepository.findOne({ where: { id, isDeleted: false } });
   }
   async findByEmail(email: string): Promise<User | undefined> {
     return this.userRepository.findOne({
-        where: { email },
+        where: { email, isDeleted: false },
         select: ['id', 'email', 'name', 'phone', 'country', 'birthday', 'role'],
     });
 }
   async findAll(): Promise<User[]> {
       return this.userRepository.find({
-          select: ['id', 'email', 'name', 'phone', 'country', 'birthday', 'role'],
+          where: { isDeleted: false },
+          select: ['id', 'email', 'name', 'phone', 'country', 'birthday', 'role', 'isDeleted', 'deletedDate'],
       });
 
   }
+  async softDelete(id: number): Promise<User | undefined> {
+    const user = await this.userRepository.findOne({ where: { id } });
+    if (!user) {  
+        return undefined;
+    }
+    user.isDeleted = true;
+    user.deletedDate = new Date();
+    return this.userRepository.save(user);
+}
 
  // Checks if a user with the given email or RUT already exists and if so throws an exception.
  private async checkIfUserExists(email: string, rut: string): Promise<void> {
@@ -157,11 +167,22 @@ async create(createUserDto: CreateUserDto, creator?: User): Promise<User> {
 
   }
 
-  remove(id: number) {
-    return `This action removes a #${id} user`;
+  async remove(id: string) {
+    try {
+      const result = await this.userRepository.softDelete(id);
+      if (result.affected === 0) {
+        throw new NotFoundException("The user doesn't exist");
+      }
+      return { message: 'User deleted successfully' };
+    } catch (error) {
+      if (error instanceof HttpException) {
+        // Si el error ya es una excepción HTTP de NestJS, simplemente relánzalo
+        throw error;
+      } else {
+        // Para cualquier otro tipo de error, registra el error y lanza una InternalServerErrorException
+        console.error("Error deleting user:", error);
+        throw new InternalServerErrorException("Failed to delete user");
+      }
+    }
   }
-  
-
-
-
 }

@@ -12,6 +12,7 @@ import { Role } from './entities/role.enum';
 import { find } from 'rxjs';
 import { GetUserDto } from './dto/get-user.dto';
 import { User } from './entities/user.entity';
+import { Not } from 'typeorm';
 
 @Controller('user')
 export class UserController {
@@ -43,7 +44,11 @@ export class UserController {
     if (!req.user || !req.body.email) {
       throw new BadRequestException('Invalid user data.');
     }
-    return this.userService.findByEmail(req.body.email);
+    const user = await this.userService.findByEmail(req.body.email);
+    if (user == undefined) {
+      return { message: 'User was not found or has been deleted' };
+    }
+    return user;
   }
   
 
@@ -51,8 +56,12 @@ export class UserController {
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles(Role.ADMIN)
   @UsePipes(new ValidationPipe({ transform: true }))
-  findOne(@Param() params: GetUserDto) {
-    return this.userService.findUserById(params.id);
+  async findOne(@Param() params: GetUserDto) {
+    const user = await this.userService.findUserById(params.id);
+    if (user == undefined) {
+      return { message: 'User was not found or has been deleted' };
+    }
+    return user;
   }
 
   @Get('all')
@@ -73,8 +82,11 @@ export class UserController {
     return this.userService.update(rut, updateUserDto);
   }
 
-  @Delete(':id')
-  remove(@Param('id') id: string) {
-    return this.userService.remove(+id);
+@Delete('delete/:id')
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles(Role.ADMIN)
+  remove(@Param('id') id: number) {
+    return this.userService.softDelete(id);
+    
   }
 }
