@@ -1,4 +1,4 @@
-import { ConflictException, HttpException, HttpStatus, Injectable, UnauthorizedException } from '@nestjs/common';
+import { ConflictException, Injectable, InternalServerErrorException, NotFoundException, UseGuards, HttpException,HttpStatus,UnauthorizedException} from '@nestjs/common';
 import { CreateUserDto } from './dto/create-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
 import { InjectRepository } from '@nestjs/typeorm';
@@ -9,6 +9,9 @@ import { Role } from './entities/role.enum';
 import { LoginDto } from './dto/login-user.dto';
 import { JwtService } from '@nestjs/jwt';
 import { ConfigService } from '@nestjs/config';
+import { RolesGuard } from 'src/guards/role.guard';
+import { JwtAuthGuard } from 'src/guards/jwt-auth.guard';
+import { Roles } from 'src/decorators/has-roles.decorator';
 
 @Injectable()
 export class UserService {
@@ -105,39 +108,53 @@ async create(createUserDto: CreateUserDto, creator?: User): Promise<User> {
   async login(loginDto: LoginDto) {
     const { password, email } = loginDto;
     // Verify email
-    const userFoundByEmail = await this.userRepository.findOne({ where: { email } });
+    const existingUser = await this.userRepository.findOne({ where: { email } });
 
-    if (!userFoundByEmail) {
+    if (!existingUser) {
       // if the email doesn't exists, throw a bad request exception
-      throw new HttpException("The user doesn't exists", HttpStatus.BAD_REQUEST);
+      throw new NotFoundException("The user doesn't exist");
     }
 
     // Verify password
-    const verifyPassword = await bcrypt.compare(password, userFoundByEmail.password);
+    const verifyPassword = await bcrypt.compare(password, existingUser.password);
 
     if (!verifyPassword) {
       // if the password doesn't match, throw a new error with a message of invalid credentials
-      throw new Error("Invalid credentials");
+      throw new UnauthorizedException("Invalid credentials");
     }
 
     // If everithing is ok, returns a token signed with the role and the jwt_secret defined in an .env file
     return this.jwtServ.sign({
-      role: userFoundByEmail.role,
+      role: existingUser.role,
     }, {
       secret: this.configService.get<string>('JWT_SECRET'),
       expiresIn: '1h',
     });
   }
 
-
-
-
   findOne(id: number) {
     return `This action returns a #${id} user`;
   }
 
-  update(id: number, updateUserDto: UpdateUserDto) {
-    return `This action updates a #${id} user`;
+  async update(rut: string, updateUserDto: UpdateUserDto) {
+
+    const { name, email } = updateUserDto;
+
+    const existingUser = await this.userRepository.findOne({ where: { rut: rut } })
+
+    if (!existingUser) {
+      throw new NotFoundException("The user doesn't exist");
+    }
+
+    existingUser.name = name;
+    existingUser.email = email;
+
+    try {
+      return this.userRepository.save(existingUser);
+    } catch (error) {
+      throw new InternalServerErrorException("Failed to update user");
+    }
+
   }
 
   remove(id: number) {

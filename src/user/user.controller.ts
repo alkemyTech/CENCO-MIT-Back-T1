@@ -63,10 +63,14 @@ export class UserController {
     return this.userService.findAll();
   }
 
-  
-  @Patch(':id')
-  update(@Param('id') id: string, @Body() updateUserDto: UpdateUserDto) {
-    return this.userService.update(+id, updateUserDto);
+  @Roles(Role.ADMIN)
+  @UseGuards(
+    JwtAuthGuard,
+    RolesGuard
+  )
+  @Patch(':rut')
+  update(@Param('rut') rut: string, @Body() updateUserDto: UpdateUserDto) {
+    return this.userService.update(rut, updateUserDto);
   }
 
   @Delete(':id')
