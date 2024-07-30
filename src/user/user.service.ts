@@ -9,7 +9,12 @@ import { Role } from './entities/role.enum';
 import { LoginDto } from './dto/login-user.dto';
 import { JwtService } from '@nestjs/jwt';
 import { ConfigService } from '@nestjs/config';
+import { RolesGuard } from 'src/guards/role.guard';
+import { JwtAuthGuard } from 'src/guards/jwt-auth.guard';
+import { Roles } from 'src/decorators/has-roles.decorator';
+import { th } from 'date-fns/locale';
 import { SearchUserDto } from './dto/seach-user.dto';
+
 
 @Injectable()
 export class UserService {
@@ -40,20 +45,34 @@ export class UserService {
     }
   }
   async MyProfile(id: number): Promise<User | undefined> {
-    return this.userRepository.findOne({ where: { id } });
+    return this.userRepository.findOne({ where: { id, isDeleted: false } });
   }
   async findByEmail(email: string): Promise<User | undefined> {
     return this.userRepository.findOne({
-      where: { email },
-      select: ['id', 'email', 'name', 'phone', 'country', 'birthday', 'role'],
+        where: { email, isDeleted: false },
+        select: ['id', 'email', 'name', 'phone', 'country', 'birthday', 'role'],
+
     });
   }
   async findAll(): Promise<User[]> {
-    return this.userRepository.find({
-      select: ['id', 'email', 'name', 'phone', 'country', 'birthday', 'role'],
-    });
+      return this.userRepository.find({
+          where: { isDeleted: false },
+          select: ['id', 'email', 'name', 'phone', 'country', 'birthday', 'role', 'isDeleted', 'deletedDate'],
+      });
+
 
   }
+  async softRemove(id: number): Promise<User> {
+    const user = await this.userRepository.findOne({ 
+        where: { id },
+        select: ['id', 'email', 'name', 'phone', 'country', 'birthday', 'role', 'isDeleted', 'deletedDate']});
+    if (!user) {  
+        throw new NotFoundException('User not found');
+    }
+    user.isDeleted = true;
+    user.deletedDate = new Date();
+    return await this.userRepository.save(user);
+}
 
   // Checks if a user with the given email or RUT already exists and if so throws an exception.
   private async checkIfUserExists(email: string, rut: string): Promise<void> {
@@ -176,6 +195,24 @@ export class UserService {
 
   }
 
+
+  async delete (id: number) {
+    try {
+      const result = await this.userRepository.softDelete(id);
+      if (result.affected === 0) {
+        throw new NotFoundException("The user doesn't exist");
+      }
+      return { message: 'User deleted successfully' };
+    } catch (error) {
+      if (error instanceof HttpException) {
+       
+        throw error;
+      } else {
+        throw new InternalServerErrorException("Failed to delete user");
+      }
+    }
+  }
+
   async searchUsers(searchUserDto: SearchUserDto): Promise<Partial<User>[]> {
     try {
       const { name, email, country } = searchUserDto;
@@ -206,12 +243,4 @@ export class UserService {
       throw new BadRequestException('Error searching users');
     }
   }
-
-  remove(id: number) {
-    return `This action removes a #${id} user`;
-  }
-
-
-
-
 }

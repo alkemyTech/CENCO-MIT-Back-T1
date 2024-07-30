@@ -1,4 +1,6 @@
-import { Controller, Get, Post, Body, Patch, Param, Delete, UnauthorizedException, Req, BadRequestException, UsePipes, ValidationPipe, Query, Res, HttpStatus, HttpCode } from '@nestjs/common';
+
+import { Controller, Get, Post, Body, Patch, Param, Delete, UnauthorizedException, Req, BadRequestException, UsePipes, ValidationPipe,NotFoundException, Query, Res, HttpStatus, HttpCode } from '@nestjs/common';
+
 import { UserService } from './user.service';
 import { CreateUserDto } from './dto/create-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
@@ -12,7 +14,11 @@ import { Role } from './entities/role.enum';
 import { find } from 'rxjs';
 import { GetUserDto } from './dto/get-user.dto';
 import { User } from './entities/user.entity';
+
+import { Not } from 'typeorm';
+
 import { SearchUserDto } from './dto/seach-user.dto';
+
 
 @Controller('user')
 export class UserController {
@@ -37,20 +43,14 @@ export class UserController {
   @Get('profile')
   @UseGuards(JwtAuthGuard)
   async getProfile(@Req() req: Request & { user: User }) {
-    if (!req.user || !req.body.email) {
-      throw new BadRequestException('Invalid user data.');
+    const user = await this.userService.findByEmail(req.body.email);
+    if (user == undefined) {
+      throw new NotFoundException ('User was not found');
     }
-    return this.userService.findByEmail(req.body.email);
+    return user;
   }
 
 
-  @Get('profiles/:id')
-  @UseGuards(JwtAuthGuard, RolesGuard)
-  @Roles(Role.ADMIN)
-  @UsePipes(new ValidationPipe({ transform: true }))
-  findOne(@Param() params: GetUserDto) {
-    return this.userService.findUserById(params.id);
-  }
 
   @Get('all')
   @UseGuards(JwtAuthGuard, RolesGuard)
@@ -70,6 +70,14 @@ export class UserController {
     return this.userService.update(rut, updateUserDto);
   }
 
+
+  @Delete('delete/:id')
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles(Role.ADMIN)
+  async remove(@Param('id') id: number) {
+    return await this.userService.delete(id);
+  }
+
   @Roles(Role.ADMIN)
   @UseGuards(
     JwtAuthGuard,
@@ -82,10 +90,5 @@ export class UserController {
       message: `Found ${users.length} users`,
       data: { users },
     };
-  }
-
-  @Delete(':id')
-  remove(@Param('id') id: string) {
-    return this.userService.remove(+id);
   }
 }
