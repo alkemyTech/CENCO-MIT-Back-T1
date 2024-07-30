@@ -43,7 +43,7 @@ export class UserController {
   async getProfile(@Req() req: Request & { user: User }) {
     const user = await this.userService.findByEmail(req.body.email);
     if (user == undefined) {
-      throw new NotFoundException ('User was not found or has been deleted');
+      throw new NotFoundException ('User was not found');
     }
     return user;
   }
@@ -72,7 +72,7 @@ export class UserController {
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles(Role.ADMIN)
   async remove(@Param('id') id: number) {
-    return await this.userService.softDelete(id);
+    return await this.userService.softRemove(id);
     
   }
 }

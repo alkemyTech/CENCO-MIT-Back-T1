@@ -12,6 +12,7 @@ import { ConfigService } from '@nestjs/config';
 import { RolesGuard } from 'src/guards/role.guard';
 import { JwtAuthGuard } from 'src/guards/jwt-auth.guard';
 import { Roles } from 'src/decorators/has-roles.decorator';
+import { th } from 'date-fns/locale';
 
 @Injectable()
 export class UserService {
@@ -57,12 +58,12 @@ export class UserService {
       });
 
   }
-  async softDelete(id: number): Promise<User | undefined> {
+  async softRemove(id: number): Promise<User> {
     const user = await this.userRepository.findOne({ 
         where: { id },
         select: ['id', 'email', 'name', 'phone', 'country', 'birthday', 'role', 'isDeleted', 'deletedDate']});
     if (!user) {  
-        return undefined;
+        throw new NotFoundException('User not found');
     }
     user.isDeleted = true;
     user.deletedDate = new Date();
