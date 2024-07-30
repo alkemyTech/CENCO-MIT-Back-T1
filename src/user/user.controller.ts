@@ -1,4 +1,4 @@
-import { Controller, Get, Post, Body, Patch, Param, Delete, UnauthorizedException, Req, BadRequestException, UsePipes, ValidationPipe } from '@nestjs/common';
+import { Controller, Get, Post, Body, Patch, Param, Delete, UnauthorizedException, Req, BadRequestException, UsePipes, ValidationPipe, Query, Res, HttpStatus, HttpCode } from '@nestjs/common';
 import { UserService } from './user.service';
 import { CreateUserDto } from './dto/create-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
@@ -12,6 +12,7 @@ import { Role } from './entities/role.enum';
 import { find } from 'rxjs';
 import { GetUserDto } from './dto/get-user.dto';
 import { User } from './entities/user.entity';
+import { SearchUserDto } from './dto/seach-user.dto';
 
 @Controller('user')
 export class UserController {
@@ -26,15 +27,11 @@ export class UserController {
   }
 
   @Post('login')
+  @HttpCode(HttpStatus.OK)  //httpStatus.ok to change the default 201 created status in method post
   // From the body we get the parameters of the login defined in the dto file
   async login(@Body() loginDto: LoginDto) {
-    try {
-      // returns the response from de service
-      return this.userService.login(loginDto)
-    } catch (error) {
-      // throw an unauthorized exception
-      throw new UnauthorizedException();
-    }
+    // returns the response from de service
+    return this.userService.login(loginDto)
   }
 
   @Get('profile')
@@ -45,9 +42,9 @@ export class UserController {
     }
     return this.userService.findByEmail(req.body.email);
   }
-  
 
-@Get('profiles/:id')
+
+  @Get('profiles/:id')
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles(Role.ADMIN)
   @UsePipes(new ValidationPipe({ transform: true }))
@@ -58,8 +55,8 @@ export class UserController {
   @Get('all')
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles(Role.ADMIN)
-  findAll(@Req() req: Request & { user: User}) {
-    
+  findAll(@Req() req: Request & { user: User }) {
+
     return this.userService.findAll();
   }
 
@@ -68,9 +65,23 @@ export class UserController {
     JwtAuthGuard,
     RolesGuard
   )
-  @Patch(':rut')
-  update(@Param('rut') rut: string, @Body() updateUserDto: UpdateUserDto) {
+  @Patch('update')
+  update(@Query('rut') rut: string, @Body() updateUserDto: UpdateUserDto) {
     return this.userService.update(rut, updateUserDto);
+  }
+
+  @Roles(Role.ADMIN)
+  @UseGuards(
+    JwtAuthGuard,
+    RolesGuard
+  )
+  @Get('search')
+  async searchUsers(@Query() query: SearchUserDto) {
+    const users = await this.userService.searchUsers(query);
+    return {
+      message: `Found ${users.length} users`,
+      data: { users },
+    };
   }
 
   @Delete(':id')
