@@ -1,4 +1,4 @@
-import { Controller, Get, Post, Body, Patch, Param, Delete, UnauthorizedException, Req, BadRequestException, UsePipes, ValidationPipe, Query, Res, HttpStatus } from '@nestjs/common';
+import { Controller, Get, Post, Body, Patch, Param, Delete, UnauthorizedException, Req, BadRequestException, UsePipes, ValidationPipe, Query, Res, HttpStatus, HttpCode } from '@nestjs/common';
 import { UserService } from './user.service';
 import { CreateUserDto } from './dto/create-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
@@ -27,6 +27,7 @@ export class UserController {
   }
 
   @Post('login')
+  @HttpCode(HttpStatus.OK)  //httpStatus.ok to change the default 201 created status in method post
   // From the body we get the parameters of the login defined in the dto file
   async login(@Body() loginDto: LoginDto) {
     try {

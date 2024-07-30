@@ -121,13 +121,20 @@ export class UserService {
       throw new UnauthorizedException("Invalid credentials");
     }
 
-    // If everithing is ok, returns a token signed with the role and the jwt_secret defined in an .env file
-    return this.jwtServ.sign({
-      role: existingUser.role,
+    const token = this.jwtServ.sign({
+      sub: existingUser.id, // ID del usuario
+      role: existingUser.role
     }, {
       secret: this.configService.get<string>('JWT_SECRET'),
-      expiresIn: '1h',
+      expiresIn: '1h'
     });
+
+    return {
+      statusCode: HttpStatus.OK,
+      message: 'Login successful',
+      data: token
+      
+    };
   }
 
   findOne(id: number) {
