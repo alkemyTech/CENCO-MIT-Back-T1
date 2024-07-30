@@ -2,7 +2,6 @@ import { Controller, Get, Post, Body, Patch, Param, Delete, UnauthorizedExceptio
 import { UserService } from './user.service';
 import { CreateUserDto } from './dto/create-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
-import { LoginDto } from './dto/login-user.dto';
 import { Request } from 'express';
 import { UseGuards } from '@nestjs/common';
 import { JwtAuthGuard } from '../guards/jwt-auth.guard';
@@ -13,29 +12,9 @@ import { find } from 'rxjs';
 import { GetUserDto } from './dto/get-user.dto';
 import { User } from './entities/user.entity';
 
-@Controller('user')
+@Controller('auth')
 export class UserController {
   constructor(private readonly userService: UserService) { }
-
-  @Post('signup')
-  @UseGuards(JwtAuthGuard, RolesGuard)
-  @Roles(Role.ADMIN)
-  async create(@Body() createUserDto: CreateUserDto, @Req() req: Request): Promise<{ message: string }> {
-    await this.userService.create(createUserDto, req.user);
-    return { message: 'User successfully created' };
-  }
-
-  @Post('login')
-  // From the body we get the parameters of the login defined in the dto file
-  async login(@Body() loginDto: LoginDto) {
-    try {
-      // returns the response from de service
-      return this.userService.login(loginDto)
-    } catch (error) {
-      // throw an unauthorized exception
-      throw new UnauthorizedException();
-    }
-  }
 
   @Get('profile')
   @UseGuards(JwtAuthGuard)

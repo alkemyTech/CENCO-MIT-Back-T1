@@ -6,6 +6,8 @@ import { UserService } from './user/user.service';
 import { CreateUserDto } from './user/dto/create-user.dto';
 import { Role } from './user/entities/role.enum';
 import { ConfigService } from '@nestjs/config';
+import { AuthService } from './auth/auth.service';
+import { CreateAuthDto } from './auth/dto/create-auth.dto';
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
@@ -35,13 +37,13 @@ async function bootstrap() {
   app.useGlobalFilters(new HttpExceptionFilter());
 
   const configService = app.get(ConfigService);
-  const userService = app.get(UserService);
+  const authService = app.get(AuthService);
 
   const userEmail = configService.get<string>('defaultAdmin.email');
-  const existingUser = await userService.findByEmail(userEmail);
+  const existingUser = await authService.findByEmail(userEmail);
 
   if (!existingUser) {
-    const userDTO: CreateUserDto = {
+    const userDTO: CreateAuthDto = {
       name: configService.get<string>('defaultAdmin.name'),
       rut: configService.get<string>('defaultAdmin.rut'),
       email: userEmail,
@@ -49,7 +51,7 @@ async function bootstrap() {
       role: Role.ADMIN,
     };
 
-    const admin = await userService.create(userDTO);
+    const admin = await authService.create(userDTO);
     console.log('Inserted admin:', admin);
   }
 

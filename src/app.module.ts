@@ -12,6 +12,7 @@ import { winstonConfig } from './winston/wiston-config';
 import { LoggingMiddleware } from './middlewares/logging.middleware';
 import { APP_INTERCEPTOR } from '@nestjs/core';
 import { ResponseInterceptor } from './interceptors/response.interceptor';
+import { AuthModule } from './auth/auth.module';
 
 @Module({
   imports: [
@@ -27,6 +28,7 @@ import { ResponseInterceptor } from './interceptors/response.interceptor';
       inject: [ConfigService],
     }),
     UserModule,
+    AuthModule,
   ],
   controllers: [AppController],
   providers: [
