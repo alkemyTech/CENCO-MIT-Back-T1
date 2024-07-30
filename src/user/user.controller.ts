@@ -72,7 +72,7 @@ export class UserController {
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles(Role.ADMIN)
   async remove(@Param('id') id: number) {
-    return await this.userService.softRemove(id);
+    return await this.userService.delete(id);
     
   }
 }

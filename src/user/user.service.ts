@@ -170,7 +170,7 @@ async create(createUserDto: CreateUserDto, creator?: User): Promise<User> {
 
   }
 
-  async remove(id: string) {
+  async delete (id: number) {
     try {
       const result = await this.userRepository.softDelete(id);
       if (result.affected === 0) {
@@ -179,11 +179,9 @@ async create(createUserDto: CreateUserDto, creator?: User): Promise<User> {
       return { message: 'User deleted successfully' };
     } catch (error) {
       if (error instanceof HttpException) {
-        // Si el error ya es una excepción HTTP de NestJS, simplemente relánzalo
+       
         throw error;
       } else {
-        // Para cualquier otro tipo de error, registra el error y lanza una InternalServerErrorException
-        console.error("Error deleting user:", error);
         throw new InternalServerErrorException("Failed to delete user");
       }
     }
