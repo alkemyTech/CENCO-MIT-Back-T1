@@ -58,13 +58,15 @@ export class UserService {
 
   }
   async softDelete(id: number): Promise<User | undefined> {
-    const user = await this.userRepository.findOne({ where: { id } });
+    const user = await this.userRepository.findOne({ 
+        where: { id },
+        select: ['id', 'email', 'name', 'phone', 'country', 'birthday', 'role', 'isDeleted', 'deletedDate']});
     if (!user) {  
         return undefined;
     }
     user.isDeleted = true;
     user.deletedDate = new Date();
-    return this.userRepository.save(user);
+    return await this.userRepository.save(user);
 }
 
  // Checks if a user with the given email or RUT already exists and if so throws an exception.

@@ -1,4 +1,4 @@
-import { Controller, Get, Post, Body, Patch, Param, Delete, UnauthorizedException, Req, BadRequestException, UsePipes, ValidationPipe } from '@nestjs/common';
+import { Controller, Get, Post, Body, Patch, Param, Delete, UnauthorizedException, Req, BadRequestException, UsePipes, ValidationPipe, NotFoundException } from '@nestjs/common';
 import { UserService } from './user.service';
 import { CreateUserDto } from './dto/create-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
@@ -41,28 +41,14 @@ export class UserController {
   @Get('profile')
   @UseGuards(JwtAuthGuard)
   async getProfile(@Req() req: Request & { user: User }) {
-    if (!req.user || !req.body.email) {
-      throw new BadRequestException('Invalid user data.');
-    }
     const user = await this.userService.findByEmail(req.body.email);
     if (user == undefined) {
-      return { message: 'User was not found or has been deleted' };
+      throw new NotFoundException ('User was not found or has been deleted');
     }
     return user;
   }
   
 
-@Get('profiles/:id')
-  @UseGuards(JwtAuthGuard, RolesGuard)
-  @Roles(Role.ADMIN)
-  @UsePipes(new ValidationPipe({ transform: true }))
-  async findOne(@Param() params: GetUserDto) {
-    const user = await this.userService.findUserById(params.id);
-    if (user == undefined) {
-      return { message: 'User was not found or has been deleted' };
-    }
-    return user;
-  }
 
   @Get('all')
   @UseGuards(JwtAuthGuard, RolesGuard)
@@ -85,8 +71,8 @@ export class UserController {
 @Delete('delete/:id')
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles(Role.ADMIN)
-  remove(@Param('id') id: number) {
-    return this.userService.softDelete(id);
+  async remove(@Param('id') id: number) {
+    return await this.userService.softDelete(id);
     
   }
 }
