@@ -23,11 +23,14 @@ export class HttpExceptionFilter implements ExceptionFilter {
     };
 
     if (exception instanceof BadRequestException) {
-      const response = exception.getResponse();
-      if (typeof response === 'object' && response.hasOwnProperty('message')) {
-        errorResponse['errors'] = response['message'];
+      const res = exception.getResponse();
+      if (typeof res === 'object' && 'message' in res) {
+        errorResponse['errors'] = res['message'];
       }
     }
+
+    // catch the error response
+    response.locals.error = errorResponse.message;
 
     response.status(status).json(errorResponse);
   }
