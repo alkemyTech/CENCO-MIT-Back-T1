@@ -1,6 +1,5 @@
-import { Controller, Get, Post, Body, Patch, Param, Delete, UnauthorizedException, Req, BadRequestException, UsePipes, ValidationPipe } from '@nestjs/common';
+import { Controller, Get, Post, Body, Patch, Param, Delete, Req,NotFoundException, Query, HttpStatus, HttpCode } from '@nestjs/common';
 import { UserService } from './user.service';
-import { CreateUserDto } from './dto/create-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
 import { Request } from 'express';
 import { UseGuards } from '@nestjs/common';
@@ -8,37 +7,29 @@ import { JwtAuthGuard } from '../guards/jwt-auth.guard';
 import { RolesGuard } from 'src/guards/role.guard';
 import { Roles } from 'src/decorators/has-roles.decorator';
 import { Role } from './entities/role.enum';
-import { find } from 'rxjs';
-import { GetUserDto } from './dto/get-user.dto';
 import { User } from './entities/user.entity';
+import { SearchUserDto } from './dto/seach-user.dto';
 
-@Controller('auth')
+
+@Controller('user')
 export class UserController {
   constructor(private readonly userService: UserService) { }
+
 
   @Get('profile')
   @UseGuards(JwtAuthGuard)
   async getProfile(@Req() req: Request & { user: User }) {
-    if (!req.user || !req.body.email) {
-      throw new BadRequestException('Invalid user data.');
+    const user = await this.userService.findByEmail(req.body.email);
+    if (user == undefined) {
+      throw new NotFoundException ('User was not found');
     }
-    return this.userService.findByEmail(req.body.email);
-  }
-  
-
-@Get('profiles/:id')
-  @UseGuards(JwtAuthGuard, RolesGuard)
-  @Roles(Role.ADMIN)
-  @UsePipes(new ValidationPipe({ transform: true }))
-  findOne(@Param() params: GetUserDto) {
-    return this.userService.findUserById(params.id);
+    return user;
   }
 
   @Get('all')
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles(Role.ADMIN)
-  findAll(@Req() req: Request & { user: User}) {
-    
+  findAll(@Req() req: Request & { user: User }) {
     return this.userService.findAll();
   }
 
@@ -47,13 +38,30 @@ export class UserController {
     JwtAuthGuard,
     RolesGuard
   )
-  @Patch(':rut')
-  update(@Param('rut') rut: string, @Body() updateUserDto: UpdateUserDto) {
+  @Patch('update')
+  update(@Query('rut') rut: string, @Body() updateUserDto: UpdateUserDto) {
     return this.userService.update(rut, updateUserDto);
   }
 
-  @Delete(':id')
-  remove(@Param('id') id: string) {
-    return this.userService.remove(+id);
+
+  @Delete('delete/:id')
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles(Role.ADMIN)
+  async remove(@Param('id') id: number) {
+    return await this.userService.delete(id);
+  }
+
+  @Roles(Role.ADMIN)
+  @UseGuards(
+    JwtAuthGuard,
+    RolesGuard
+  )
+  @Get('search')
+  async searchUsers(@Query() query: SearchUserDto) {
+    const users = await this.userService.searchUsers(query);
+    return {
+      message: `Found ${users.length} users`,
+      data: { users },
+    };
   }
 }

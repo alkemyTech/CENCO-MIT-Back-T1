@@ -1,4 +1,4 @@
-import { ConflictException, Injectable, NotFoundException, UnauthorizedException } from '@nestjs/common';
+import { ConflictException, HttpStatus, Injectable, NotFoundException, UnauthorizedException } from '@nestjs/common';
 import { CreateAuthDto } from './dto/create-auth.dto';
 import { UpdateAuthDto } from './dto/update-auth.dto';
 import { InjectRepository } from '@nestjs/typeorm';
@@ -12,6 +12,7 @@ import { LoginDto } from './dto/login-user.dto';
 
 @Injectable()
 export class AuthService {
+
   constructor(
     @InjectRepository(User)
     private authRepository: Repository<User>,
@@ -19,53 +20,61 @@ export class AuthService {
     private readonly configService: ConfigService
   ) { }
 
-   // Checks if a user with the given email or RUT already exists and if so throws an exception.
- private async checkIfUserExists(email: string, rut: string): Promise<void> {
-  const existingUser = await this.authRepository.findOne({ 
-    where: [{ email }, { rut }] 
-  });
+  
+  async findByEmail(email: string): Promise<User | undefined> {
+    return this.authRepository.findOne({
+        where: { email, isDeleted: false },
+        select: ['id', 'email', 'name', 'phone', 'country', 'birthday', 'role'],
 
-  if (existingUser) {
-    if (existingUser.email === email) {
-      throw new ConflictException('Email is already registered');
-    } 
-    if (existingUser.rut === rut) {
-      throw new ConflictException('RUT is already registered');
+    });
+  }
+  // Checks if a user with the given email or RUT already exists and if so throws an exception.
+  private async checkIfUserExists(email: string, rut: string): Promise<void> {
+    const existingUser = await this.authRepository.findOne({
+      where: [{ email }, { rut }]
+    });
+
+    if (existingUser) {
+      if (existingUser.email === email) {
+        throw new ConflictException('Email is already registered');
+      }
+      if (existingUser.rut === rut) {
+        throw new ConflictException('RUT is already registered');
+      }
     }
   }
-}
 
-// Hash the provided password using bcrypt 
-private async hashPassword(password: string): Promise<string> {
-  const salt = await bcrypt.genSalt();
-  return bcrypt.hash(password, salt);
-}
-
-// Create a new user, only if the creator is an admin, ensuring unique email and RUT, and hashing the password
-async create(createAuthDto: CreateAuthDto, creator?: User): Promise<User> {
-  if (creator && creator.role !== Role.ADMIN) {
-    throw new UnauthorizedException('Only admins can create new users');
+  // Hash the provided password using bcrypt 
+  private async hashPassword(password: string): Promise<string> {
+    const salt = await bcrypt.genSalt();
+    return bcrypt.hash(password, salt);
   }
 
-  const { password, email, name, rut, phone, country, birthday, role } = createAuthDto;
+  // Create a new user, only if the creator is an admin, ensuring unique email and RUT, and hashing the password
+  async create(createAuthDto: CreateAuthDto, creator?: User): Promise<User> {
+    if (creator && creator.role !== Role.ADMIN) {
+      throw new UnauthorizedException('Only admins can create new users');
+    }
 
-  await this.checkIfUserExists(email, rut);
+    const { password, email, name, rut, phone, country, birthday, role } = createAuthDto;
 
-  const hashedPassword = await this.hashPassword(password);
+    await this.checkIfUserExists(email, rut);
 
-  const user = this.authRepository.create({
-    name,
-    rut,
-    email,
-    password: hashedPassword,
-    phone,
-    country,
-    birthday,
-    role: role || Role.USER,
-  });
+    const hashedPassword = await this.hashPassword(password);
 
-  return this.authRepository.save(user);
-}
+    const user = this.authRepository.create({
+      name,
+      rut,
+      email,
+      password: hashedPassword,
+      phone,
+      country,
+      birthday,
+      role: role || Role.USER,
+    });
+
+    return this.authRepository.save(user);
+  }
 
   async login(loginDto: LoginDto) {
     const { password, email } = loginDto;
@@ -85,20 +94,20 @@ async create(createAuthDto: CreateAuthDto, creator?: User): Promise<User> {
       throw new UnauthorizedException("Invalid credentials");
     }
 
-    // If everithing is ok, returns a token signed with the role and the jwt_secret defined in an .env file
-    return this.jwtServ.sign({
-      role: existingUser.role,
+    const token = this.jwtServ.sign({
+      sub: existingUser.id, // ID del usuario
+      role: existingUser.role
     }, {
       secret: this.configService.get<string>('JWT_SECRET'),
-      expiresIn: '1h',
+      expiresIn: '1h'
     });
-  }
 
-  async findByEmail(email: string): Promise<User | undefined> {
-    return this.authRepository.findOne({
-      where: { email },
-      select: ['id', 'email', 'name', 'phone', 'country', 'birthday', 'role'],
-    });
+    return {
+      statusCode: HttpStatus.OK,
+      message: 'Login successful',
+      data: token
+
+    };
   }
 
   findAll() {

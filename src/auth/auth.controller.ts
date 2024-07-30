@@ -1,4 +1,4 @@
-import { Controller, Get, Post, Body, Patch, Param, Delete, UseGuards, Req, UnauthorizedException } from '@nestjs/common';
+import { Controller, Get, Post, Body, Patch, Param, Delete, UseGuards, Req, UnauthorizedException, HttpCode, HttpStatus } from '@nestjs/common';
 import { AuthService } from './auth.service';
 import { CreateAuthDto } from './dto/create-auth.dto';
 import { UpdateAuthDto } from './dto/update-auth.dto';
@@ -23,15 +23,11 @@ export class AuthController {
   }
 
   @Post('login')
+  @HttpCode(HttpStatus.OK)  //httpStatus.ok to change the default 201 created status in method post
   // From the body we get the parameters of the login defined in the dto file
   async login(@Body() loginDto: LoginDto) {
-    try {
-      // returns the response from de service
-      return this.authService.login(loginDto)
-    } catch (error) {
-      // throw an unauthorized exception
-      throw new UnauthorizedException();
-    }
+    // returns the response from de service
+    return this.authService.login(loginDto)
   }
 
   @Get()
