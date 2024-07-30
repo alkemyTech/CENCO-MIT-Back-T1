@@ -3,7 +3,6 @@ import {
   NestInterceptor,
   ExecutionContext,
   CallHandler,
-  HttpException,
 } from '@nestjs/common';
 import { Observable, tap } from 'rxjs';
 
@@ -15,7 +14,6 @@ export class ResponseInterceptor implements NestInterceptor {
   ): Observable<any> {
     const ctx = context.switchToHttp();
     const response = ctx.getResponse();
-    const request = ctx.getRequest();
 
     const originalSend = response.send;
 
@@ -39,22 +37,6 @@ export class ResponseInterceptor implements NestInterceptor {
       return originalSend.call(this, body);
     };
 
-    return next.handle().pipe(
-      tap({
-        error: (err) => {
-          if (err instanceof HttpException) {
-            const status = err.getStatus();
-            const errorResponse = err.getResponse();
-            response.locals.error = {
-              statusCode: status,
-              message:
-                typeof errorResponse === 'object'
-                  ? JSON.stringify(errorResponse)
-                  : errorResponse,
-            };
-          }
-        },
-      }),
-    );
+    return next.handle().pipe(tap({}));
   }
 }

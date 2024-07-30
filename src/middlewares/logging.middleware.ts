@@ -23,7 +23,7 @@ export class LoggingMiddleware implements NestMiddleware {
       const timestamp = format(new Date(), 'dd-MM-yyyy, p', { locale: es });
 
       // Obtain response and error message from response.locals
-      const responseMessage = res.locals.message || 'No response message';
+      const responseMessage = res.locals.message || res.locals.error;
 
       // Define personalize colors
       const colors = {
@@ -34,15 +34,12 @@ export class LoggingMiddleware implements NestMiddleware {
         reset: '\x1b[0m',
       };
 
-      // Mensaje de log con la información de la petición y respuesta
       const logMessage = `\n${colors.request}Request: ${method} ${originalUrl} \n${colors.reset}Time: ${timestamp} \n${colors.took}Took: ${duration}ms \n${colors.status}HTTP status: ${statusCode} ${statusMessage} \n${colors.message}Response message: ${responseMessage}\n${colors.reset}`;
 
-      // Asignar el nivel del log según el código de estado de la respuesta
       if (statusCode >= 500) {
         this.logger.error(logMessage);
       } else if (statusCode >= 400) {
         this.logger.warn(logMessage);
-        // console.log(errorMessage);
       } else {
         this.logger.info(logMessage);
       }
