@@ -30,13 +30,8 @@ export class UserController {
   @HttpCode(HttpStatus.OK)  //httpStatus.ok to change the default 201 created status in method post
   // From the body we get the parameters of the login defined in the dto file
   async login(@Body() loginDto: LoginDto) {
-    try {
-      // returns the response from de service
-      return this.userService.login(loginDto)
-    } catch (error) {
-      // throw an unauthorized exception
-      throw new UnauthorizedException();
-    }
+    // returns the response from de service
+    return this.userService.login(loginDto)
   }
 
   @Get('profile')
@@ -72,11 +67,7 @@ export class UserController {
   )
   @Patch('update')
   update(@Query('rut') rut: string, @Body() updateUserDto: UpdateUserDto) {
-    try {
-      return this.userService.update(rut, updateUserDto);
-    } catch (error) {
-      throw new BadRequestException("Error updating user")
-    }
+    return this.userService.update(rut, updateUserDto);
   }
 
   @Roles(Role.ADMIN)
@@ -84,17 +75,13 @@ export class UserController {
     JwtAuthGuard,
     RolesGuard
   )
-  @Get('searchUsers')
+  @Get('search')
   async searchUsers(@Query() query: SearchUserDto) {
-    try {
-      const users = await this.userService.searchUsers(query);
-      return {
-        message: `Found ${users.length} users`,
-        data: { users },
-      };
-    } catch (error) {
-      throw new BadRequestException('Error searching users');
-    }
+    const users = await this.userService.searchUsers(query);
+    return {
+      message: `Found ${users.length} users`,
+      data: { users },
+    };
   }
 
   @Delete(':id')
