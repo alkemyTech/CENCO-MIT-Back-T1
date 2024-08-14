@@ -66,7 +66,7 @@ export class UserService {
   async softRemove(id: number): Promise<User> {
     const user = await this.userRepository.findOne({ 
       where: { id },
-      select: ['id', 'email', 'name', 'phone', 'country', 'birthday', 'role', 'deletedDate'],
+      select: ['id', 'email', 'name', 'phone', 'country', 'birthday', 'role', 'deletedDate', 'createDate'],
     });
     if (!user) {  
       throw new NotFoundException('User not found');
@@ -219,7 +219,7 @@ export class UserService {
       const { name, email, country } = searchUserDto;
 
       const queryOptions: any = {
-        select: ['id', 'email', 'name', 'rut', 'phone', 'country', 'birthday', 'role', 'deletedDate'],
+        select: ['id', 'email', 'name', 'rut', 'phone', 'country', 'birthday', 'role', 'deletedDate', 'createDate'],
         where: {},
         withDeleted: true
       };
