@@ -1,4 +1,4 @@
-import { Column, DeleteDateColumn, Entity, PrimaryGeneratedColumn } from 'typeorm';
+import { Column, DeleteDateColumn, Entity, PrimaryGeneratedColumn, CreateDateColumn } from 'typeorm';
 import { Role } from './role.enum';
 
 @Entity()
@@ -33,10 +33,10 @@ export class User {
 
   @Column({ nullable: true })
   country?: string;
-
-  @Column({ default: false })
-  isDeleted: boolean;
-
+  
   @DeleteDateColumn()
   deletedDate?: Date;
+
+  @CreateDateColumn()
+  createDate: Date; 
 }

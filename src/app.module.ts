@@ -39,8 +39,6 @@ import { ResponseInterceptor } from './interceptors/response.interceptor';
 })
 export class AppModule {
   configure(consumer: MiddlewareConsumer) {
-    const middlewares = [RateLimiterMiddleware, LoggingMiddleware];
-
-    consumer.apply(...middlewares).forRoutes('*'); // Apply middlewares to all routes
+    consumer.apply(RateLimiterMiddleware, LoggingMiddleware).forRoutes('*');
   }
 }

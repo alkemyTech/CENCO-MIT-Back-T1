@@ -32,7 +32,8 @@ export class UserService {
     try {
       const user = await this.userRepository.findOne({
         where: { id },
-        select: ['id', 'email', 'name', 'phone', 'country', 'birthday', 'role']
+        select: ['id', 'email', 'name', 'phone', 'country', 'birthday', 'role'],
+        withDeleted: true
       });
       if (!user) {
 
@@ -45,34 +46,34 @@ export class UserService {
     }
   }
   async MyProfile(id: number): Promise<User | undefined> {
-    return this.userRepository.findOne({ where: { id, isDeleted: false } });
+    return this.userRepository.findOne({ where: { id, deletedDate: null } });
   }
   async findByEmail(email: string): Promise<User | undefined> {
     return this.userRepository.findOne({
-        where: { email, isDeleted: false },
+        where: { email, deletedDate: null },
         select: ['id', 'email', 'name', 'phone', 'country', 'birthday', 'role'],
+        withDeleted: true
 
     });
   }
   async findAll(): Promise<User[]> {
       return this.userRepository.find({
-          where: { isDeleted: false },
-          select: ['id', 'email', 'name', 'phone', 'country', 'birthday', 'role', 'isDeleted', 'deletedDate'],
+          select: ['id', 'email', 'name', 'phone', 'country', 'birthday', 'role', 'deletedDate', 'createDate'],
+          withDeleted: true
       });
-
-
   }
+
   async softRemove(id: number): Promise<User> {
     const user = await this.userRepository.findOne({ 
-        where: { id },
-        select: ['id', 'email', 'name', 'phone', 'country', 'birthday', 'role', 'isDeleted', 'deletedDate']});
+      where: { id },
+      select: ['id', 'email', 'name', 'phone', 'country', 'birthday', 'role', 'deletedDate', 'createDate'],
+    });
     if (!user) {  
-        throw new NotFoundException('User not found');
+      throw new NotFoundException('User not found');
     }
-    user.isDeleted = true;
-    user.deletedDate = new Date();
+    user.deletedDate = new Date(); 
     return await this.userRepository.save(user);
-}
+  }
 
   // Checks if a user with the given email or RUT already exists and if so throws an exception.
   private async checkIfUserExists(email: string, rut: string): Promise<void> {
@@ -218,8 +219,9 @@ export class UserService {
       const { name, email, country } = searchUserDto;
 
       const queryOptions: any = {
-        select: ['id', 'email', 'name', 'rut', 'phone', 'country', 'birthday', 'role', 'isDeleted'],
-        where: {}
+        select: ['id', 'email', 'name', 'rut', 'phone', 'country', 'birthday', 'role', 'deletedDate', 'createDate'],
+        where: {},
+        withDeleted: true
       };
 
       if (name) {
