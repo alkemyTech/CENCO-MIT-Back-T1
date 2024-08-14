@@ -66,8 +66,8 @@ export class UserController {
     RolesGuard
   )
   @Patch('update')
-  update(@Query('rut') rut: string, @Body() updateUserDto: UpdateUserDto) {
-    return this.userService.update(rut, updateUserDto);
+  update(@Query('id') id: number, @Body() updateUserDto: UpdateUserDto) {
+    return this.userService.update(id, updateUserDto);
   }
 
 

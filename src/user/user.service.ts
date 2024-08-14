@@ -161,11 +161,11 @@ export class UserService {
     return `This action returns a #${id} user`;
   }
 
-  async update(rut: string, updateUserDto: UpdateUserDto) {
+  async update(id: number, updateUserDto: UpdateUserDto) {
 
     const { name, email } = updateUserDto;
 
-    const existingUser = await this.userRepository.findOne({ where: { rut: rut } })
+    const existingUser = await this.userRepository.findOne({ where: { id: id } })
 
     if (!existingUser) {
       throw new NotFoundException("The user doesn't exist");
