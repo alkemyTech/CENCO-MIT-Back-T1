@@ -1,5 +1,5 @@
 
-import { Controller, Get, Post, Body, Patch, Param, Delete, UnauthorizedException, Req, BadRequestException, UsePipes, ValidationPipe,NotFoundException, Query, Res, HttpStatus, HttpCode } from '@nestjs/common';
+import { Controller, Get, Post, Body, Patch, Param, Delete, UnauthorizedException, Req, BadRequestException, UsePipes, ValidationPipe, NotFoundException, Query, Res, HttpStatus, HttpCode } from '@nestjs/common';
 
 import { UserService } from './user.service';
 import { CreateUserDto } from './dto/create-user.dto';
@@ -43,14 +43,12 @@ export class UserController {
   @Get('profile')
   @UseGuards(JwtAuthGuard)
   async getProfile(@Req() req: Request & { user: User }) {
-  const userId = req.user.sub;
-  if (!userId) {
-    throw new NotFoundException('User ID not found in the request');
+    const userId = req.user.sub;
+    if (!userId) {
+      throw new NotFoundException('User ID not found in the request');
+    }
+    return this.userService.findUserById(userId);
   }
-  return this.userService.findUserById(userId);
-  }
-
-
 
   @Get('all')
   @UseGuards(JwtAuthGuard, RolesGuard)
@@ -70,6 +68,18 @@ export class UserController {
     return this.userService.update(id, updateUserDto);
   }
 
+  @UseGuards(
+    JwtAuthGuard,
+    RolesGuard
+  )
+  @Patch('updateByUser')
+  async updateByUser(@Req() req: Request & { user: User }, @Body() updateUserDto: UpdateUserDto) {
+    const userId = req.user.sub;
+    if (!userId) {
+      throw new NotFoundException('User ID not found in the request');
+    }
+    return this.userService.updateByUser(userId, updateUserDto);
+  }
 
   @Delete('delete/:id')
   @UseGuards(JwtAuthGuard, RolesGuard)

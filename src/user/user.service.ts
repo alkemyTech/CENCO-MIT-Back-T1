@@ -1,4 +1,4 @@
-import { ConflictException, Injectable, InternalServerErrorException, NotFoundException, UseGuards, HttpException, HttpStatus, UnauthorizedException, BadRequestException } from '@nestjs/common';
+import { ConflictException, Injectable, InternalServerErrorException, NotFoundException, HttpException, HttpStatus, UnauthorizedException, BadRequestException } from '@nestjs/common';
 import { CreateUserDto } from './dto/create-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
 import { InjectRepository } from '@nestjs/typeorm';
@@ -9,10 +9,6 @@ import { Role } from './entities/role.enum';
 import { LoginDto } from './dto/login-user.dto';
 import { JwtService } from '@nestjs/jwt';
 import { ConfigService } from '@nestjs/config';
-import { RolesGuard } from 'src/guards/role.guard';
-import { JwtAuthGuard } from 'src/guards/jwt-auth.guard';
-import { Roles } from 'src/decorators/has-roles.decorator';
-import { th } from 'date-fns/locale';
 import { SearchUserDto } from './dto/seach-user.dto';
 
 
@@ -48,6 +44,43 @@ export class UserService {
   async MyProfile(id: number): Promise<User | undefined> {
     return this.userRepository.findOne({ where: { id, deletedDate: null } });
   }
+
+  
+  async updateByUser(id: number, updateUserDto: UpdateUserDto) {
+
+    const { name, password } = updateUserDto;
+    const hashedPassword = await this.hashPassword(password);
+
+    const existingUser = await this.userRepository.findOne({ where: { id: id } })
+
+    if (!existingUser) {
+      throw new NotFoundException("The user doesn't exist");
+    }
+
+    if (name) {
+      existingUser.name = name;
+    }
+
+    if (password) {
+      existingUser.password = hashedPassword;
+    }
+
+    try {
+      await this.userRepository.save(existingUser);
+      return {
+        statusCode: HttpStatus.OK,
+        message: 'User updated successfully',
+        data: {
+          //If name is in the body, we show it in the data, we don't show the new password for security
+          ...(name ? { "new name": name } : {})
+        }
+      };
+    } catch (error) {
+      throw new InternalServerErrorException("Failed to update user");
+    }
+
+  }
+
   async findByEmail(email: string): Promise<User | undefined> {
     return this.userRepository.findOne({
         where: { email, deletedDate: null },
@@ -186,8 +219,8 @@ export class UserService {
         message: 'User updated successfully',
         data: {
           //If name or email is in the body, we show it in the data
-          ...(name ? { name: name } : {}),  
-          ...(email ? { email: email } : {})
+          ...(name ? { "new name": name } : {}),  
+          ...(email ? { "new email": email } : {})
         }
       };
     } catch (error) {
