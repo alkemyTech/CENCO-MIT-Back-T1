@@ -10,6 +10,7 @@ import { LoginDto } from './dto/login-user.dto';
 import { JwtService } from '@nestjs/jwt';
 import { ConfigService } from '@nestjs/config';
 import { SearchUserDto } from './dto/seach-user.dto';
+import { UpdateUserByUserDto } from './dto/update-user-by-user.dto';
 
 
 @Injectable()
@@ -45,66 +46,30 @@ export class UserService {
     return this.userRepository.findOne({ where: { id, deletedDate: null } });
   }
 
-  
-  async updateByUser(id: number, updateUserDto: UpdateUserDto) {
-
-    const { name, password } = updateUserDto;
-    const hashedPassword = await this.hashPassword(password);
-
-    const existingUser = await this.userRepository.findOne({ where: { id: id } })
-
-    if (!existingUser) {
-      throw new NotFoundException("The user doesn't exist");
-    }
-
-    if (name) {
-      existingUser.name = name;
-    }
-
-    if (password) {
-      existingUser.password = hashedPassword;
-    }
-
-    try {
-      await this.userRepository.save(existingUser);
-      return {
-        statusCode: HttpStatus.OK,
-        message: 'User updated successfully',
-        data: {
-          //If name is in the body, we show it in the data, we don't show the new password for security
-          ...(name ? { "new name": name } : {})
-        }
-      };
-    } catch (error) {
-      throw new InternalServerErrorException("Failed to update user");
-    }
-
-  }
-
   async findByEmail(email: string): Promise<User | undefined> {
     return this.userRepository.findOne({
-        where: { email, deletedDate: null },
-        select: ['id', 'email', 'name', 'phone', 'country', 'birthday', 'role'],
-        withDeleted: true
+      where: { email, deletedDate: null },
+      select: ['id', 'email', 'name', 'phone', 'country', 'birthday', 'role'],
+      withDeleted: true
 
     });
   }
   async findAll(): Promise<User[]> {
-      return this.userRepository.find({
-          select: ['id', 'email', 'name', 'phone', 'country', 'birthday', 'role', 'deletedDate', 'createDate'],
-          withDeleted: true
-      });
+    return this.userRepository.find({
+      select: ['id', 'email', 'name', 'phone', 'country', 'birthday', 'role', 'deletedDate', 'createDate'],
+      withDeleted: true
+    });
   }
 
   async softRemove(id: number): Promise<User> {
-    const user = await this.userRepository.findOne({ 
+    const user = await this.userRepository.findOne({
       where: { id },
       select: ['id', 'email', 'name', 'phone', 'country', 'birthday', 'role', 'deletedDate', 'createDate'],
     });
-    if (!user) {  
+    if (!user) {
       throw new NotFoundException('User not found');
     }
-    user.deletedDate = new Date(); 
+    user.deletedDate = new Date();
     return await this.userRepository.save(user);
   }
 
@@ -186,7 +151,7 @@ export class UserService {
       statusCode: HttpStatus.OK,
       message: 'Login successful',
       data: token
-      
+
     };
   }
 
@@ -195,33 +160,36 @@ export class UserService {
   }
 
   async update(id: number, updateUserDto: UpdateUserDto) {
-
-    const { name, email } = updateUserDto;
-
-    const existingUser = await this.userRepository.findOne({ where: { id: id } })
+    const existingUser = await this.userRepository.findOne({ where: { id: id } });
 
     if (!existingUser) {
       throw new NotFoundException("The user doesn't exist");
     }
 
-    if (name) {
-      existingUser.name = name;
-    }
+    // store the original data to compare the new info with the old ones to show the message
+    const originalData = { ...existingUser };
 
-    if (email) {
-      existingUser.email = email;
+    for (const key of Object.keys(updateUserDto)) {
+      if (key in existingUser) {
+        existingUser[key] = updateUserDto[key];
+      }
     }
 
     try {
       await this.userRepository.save(existingUser);
+
+      // To return de new data en response, but if the new data is a password we don't show it in the response
+      const updatedData = Object.keys(updateUserDto).reduce((acc, key) => {
+        if (updateUserDto[key] !== originalData[key]) {
+          acc[`new ${key}`] = updateUserDto[key];
+        }
+        return acc;
+      }, {} as Record<string, any>);
+
       return {
         statusCode: HttpStatus.OK,
         message: 'User updated successfully',
-        data: {
-          //If name or email is in the body, we show it in the data
-          ...(name ? { "new name": name } : {}),  
-          ...(email ? { "new email": email } : {})
-        }
+        data: updatedData
       };
     } catch (error) {
       throw new InternalServerErrorException("Failed to update user");
@@ -230,7 +198,48 @@ export class UserService {
   }
 
 
-  async delete (id: number) {
+  async updateByUser(id: number, updateUserByUserDto: UpdateUserByUserDto) {
+    const existingUser = await this.userRepository.findOne({ where: { id: id } });
+
+    if (!existingUser) {
+      throw new NotFoundException("The user doesn't exist");
+    }
+
+    // store the original data to compare the new info with the old ones to show the message
+    const originalData = { ...existingUser };
+
+    for (const key of Object.keys(updateUserByUserDto)) {
+      if (key === 'password') {
+        const hashedPassword = await this.hashPassword(updateUserByUserDto[key]);
+        existingUser.password = hashedPassword;
+      } else if (key in existingUser) {
+        existingUser[key] = updateUserByUserDto[key];
+      }
+    }
+
+    try {
+      await this.userRepository.save(existingUser);
+
+      // To return de new data en response, but if the new data is a password we don't show it in the response
+      const updatedData = Object.keys(updateUserByUserDto).reduce((acc, key) => {
+        if (updateUserByUserDto[key] !== originalData[key] && key !== 'password') {
+          acc[`new ${key}`] = updateUserByUserDto[key];
+        }
+        return acc;
+      }, {} as Record<string, any>);
+
+      return {
+        statusCode: HttpStatus.OK,
+        message: 'User updated successfully',
+        data: updatedData
+      };
+    } catch (error) {
+      throw new InternalServerErrorException("Failed to update user");
+    }
+
+  }
+
+  async delete(id: number) {
     try {
       const result = await this.userRepository.softDelete(id);
       if (result.affected === 0) {
@@ -239,7 +248,7 @@ export class UserService {
       return { message: 'User deleted successfully' };
     } catch (error) {
       if (error instanceof HttpException) {
-       
+
         throw error;
       } else {
         throw new InternalServerErrorException("Failed to delete user");

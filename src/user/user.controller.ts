@@ -18,6 +18,7 @@ import { User } from './entities/user.entity';
 import { Not } from 'typeorm';
 
 import { SearchUserDto } from './dto/seach-user.dto';
+import { UpdateUserByUserDto } from './dto/update-user-by-user.dto';
 
 
 @Controller('user')
@@ -73,12 +74,12 @@ export class UserController {
     RolesGuard
   )
   @Patch('updateByUser')
-  async updateByUser(@Req() req: Request & { user: User }, @Body() updateUserDto: UpdateUserDto) {
+  async updateByUser(@Req() req: Request & { user: User }, @Body() UpdateUserByUserDto: UpdateUserByUserDto) {
     const userId = req.user.sub;
     if (!userId) {
       throw new NotFoundException('User ID not found in the request');
     }
-    return this.userService.updateByUser(userId, updateUserDto);
+    return this.userService.updateByUser(userId, UpdateUserByUserDto);
   }
 
   @Delete('delete/:id')
