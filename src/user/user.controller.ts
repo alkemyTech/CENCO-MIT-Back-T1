@@ -1,5 +1,5 @@
 
-import { Controller, Get, Post, Body, Patch, Param, Delete, UnauthorizedException, Req, BadRequestException, UsePipes, ValidationPipe,NotFoundException, Query, Res, HttpStatus, HttpCode } from '@nestjs/common';
+import { Controller, Get, Post, Body, Patch, Param, Delete, UnauthorizedException, Req, BadRequestException, UsePipes, ValidationPipe, NotFoundException, Query, Res, HttpStatus, HttpCode } from '@nestjs/common';
 
 import { UserService } from './user.service';
 import { CreateUserDto } from './dto/create-user.dto';
@@ -18,6 +18,7 @@ import { User } from './entities/user.entity';
 import { Not } from 'typeorm';
 
 import { SearchUserDto } from './dto/seach-user.dto';
+import { UpdateUserByUserDto } from './dto/update-user-by-user.dto';
 
 
 @Controller('user')
@@ -43,14 +44,12 @@ export class UserController {
   @Get('profile')
   @UseGuards(JwtAuthGuard)
   async getProfile(@Req() req: Request & { user: User }) {
-  const userId = req.user.sub;
-  if (!userId) {
-    throw new NotFoundException('User ID not found in the request');
+    const userId = req.user.sub;
+    if (!userId) {
+      throw new NotFoundException('User ID not found in the request');
+    }
+    return this.userService.findUserById(userId);
   }
-  return this.userService.findUserById(userId);
-  }
-
-
 
   @Get('all')
   @UseGuards(JwtAuthGuard, RolesGuard)
@@ -66,10 +65,22 @@ export class UserController {
     RolesGuard
   )
   @Patch('update')
-  update(@Query('rut') rut: string, @Body() updateUserDto: UpdateUserDto) {
-    return this.userService.update(rut, updateUserDto);
+  update(@Query('id') id: number, @Body() updateUserDto: UpdateUserDto) {
+    return this.userService.update(id, updateUserDto);
   }
 
+  @UseGuards(
+    JwtAuthGuard,
+    RolesGuard
+  )
+  @Patch('updateByUser')
+  async updateByUser(@Req() req: Request & { user: User }, @Body() UpdateUserByUserDto: UpdateUserByUserDto) {
+    const userId = req.user.sub;
+    if (!userId) {
+      throw new NotFoundException('User ID not found in the request');
+    }
+    return this.userService.updateByUser(userId, UpdateUserByUserDto);
+  }
 
   @Delete('delete/:id')
   @UseGuards(JwtAuthGuard, RolesGuard)
