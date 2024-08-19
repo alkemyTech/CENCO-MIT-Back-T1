@@ -39,6 +39,25 @@ RATE_LIMIT_GENERAL_WINDOW_MS=60000  # 1 minuto
 RATE_LIMIT_GENERAL_MAX_REQUESTS=100  # 100 solicitudes
 ```
 
+## Seed Script SQL
+
+```
+use talent_alke;
+
+
+INSERT INTO talent_alke.`user`
+(name, rut, email, password, `role`, phone, birthday, country, deletedDate, createDate)
+values ('Juan Pérez', '11.222.333-4', 'juan.perez@example.com', '$2b$10$abcdefg12345hijklmop67890', 'user', '+56912345678', '1990-05-21', 'CL', NULL, '2024-08-19 09:01:38.146887'),
+('Ana López', '12.345.678-9', 'ana.lopez@example.com', '$2b$10$abcdefg12345hijklmop67890', 'admin', '+56987654321', '1985-08-10', 'CL', NULL, '2024-08-19 09:01:38.146887'),
+('Carlos Ramírez', '13.579.246-8', 'carlos.ramirez@example.com', '$2b$10$abcdefg12345hijklmop67890', 'user', '+56911223344', '1992-03-15', 'CL', NULL, '2024-08-19 09:01:38.146887'),
+('Lucía García', '14.683.925-7', 'lucia.garcia@example.com', '$2b$10$abcdefg12345hijklmop67890', 'user', '+56922334455', '1998-12-22', 'CL', NULL, '2024-08-19 09:01:38.146887'),
+('Pedro Fernández', '15.789.654-3', 'pedro.fernandez@example.com', '$2b$10$abcdefg12345hijklmop67890', 'user', '+56933445566', '1979-11-01', 'CL', NULL, '2024-08-19 09:01:38.146887'),
+('Marta Torres', '16.893.432-1', 'marta.torres@example.com', '$2b$10$abcdefg12345hijklmop67890', 'user', '+56944556677', '2000-07-09', 'CL', NULL, '2024-08-19 09:01:38.146887'),
+('Jorge Rodríguez', '17.987.321-0', 'jorge.rodriguez@example.com', '$2b$10$abcdefg12345hijklmop67890', 'user', '+56955667788', '1995-04-18', 'CL', NULL, '2024-08-19 09:01:38.146887'),
+('Sofía Vargas', '18.135.246-9', 'sofia.vargas@example.com', '$2b$10$abcdefg12345hijklmop67890', 'admin', '+56966778899', '1993-02-28', 'CL', NULL, '2024-08-19 09:01:38.146887'),
+('Ricardo Morales', '19.246.135-8', 'ricardo.morales@example.com', '$2b$10$abcdefg12345hijklmop67890', 'user', '+56977889900', '1988-09-05', 'CL', NULL, '2024-08-19 09:01:38.146887');
+```
+
 ## API Postman Collection
 
 ```
