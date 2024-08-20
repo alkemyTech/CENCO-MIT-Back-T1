@@ -1,10 +1,11 @@
 import { PartialType, PickType } from '@nestjs/mapped-types';
 import { CreateUserDto } from './create-user.dto';
-import { IsEmail, IsNotEmpty, IsOptional, IsString, MaxLength, MinLength } from 'class-validator';
+import { IsEmail, IsInt, IsNotEmpty, IsOptional, IsString, MaxLength, MinLength } from 'class-validator';
 import { User } from '../entities/user.entity';
 import { Role } from '../entities/role.enum';
 import { IsInEnum } from 'src/decorators/role-validator.decorator';
 import { IsRutFormat } from 'src/validators';
+import { Type } from 'class-transformer';
 
 export class SearchUserDto {
 
@@ -32,4 +33,8 @@ export class SearchUserDto {
     @IsOptional()
     rut?: string;
 
+    @IsOptional()
+    @Type(() => Number)
+    @IsInt({ message: 'The ID must be an integer.' })
+    id?: number;
 }
