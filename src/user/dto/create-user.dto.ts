@@ -8,7 +8,7 @@ import {
   MaxLength,
   IsDateString,
 } from 'class-validator';
-import { IsStrongPassword, IsAdult, IsRutFormat } from '../../validators';
+import { IsStrongPassword, IsAdult, IsRutFormat, IsPhoneValid } from '../../validators';
 import { Role } from '../entities/role.enum';
 import { IsInEnum } from 'src/decorators/role-validator.decorator';
 
@@ -32,15 +32,16 @@ export class CreateUserDto {
   @IsStrongPassword()
   password: string;
 
-  @IsOptional()
+  @IsNotEmpty()
   @IsString()
+  @IsPhoneValid()
   phone?: string;
 
-  @IsOptional()
+  @IsNotEmpty() 
   @IsString()
   country?: string;
 
-  @IsOptional()
+  @IsNotEmpty() 
   @IsDateString()
   @IsAdult()
   birthday?: string;
