@@ -323,7 +323,7 @@ export class UserService {
 
   async searchUsers(searchUserDto: SearchUserDto): Promise<Partial<User>[]> {
     try {
-      const { name, email, country } = searchUserDto;
+      const { name, email, country,id } = searchUserDto;
 
       const queryOptions: any = {
         select: [
@@ -351,7 +351,9 @@ export class UserService {
       if (country) {
         queryOptions.where['country'] = Like(`%${country}%`);
       }
-
+      if (id) {
+        queryOptions.where['id'] = Like(`%${id}%`);
+      }
       const users = await this.userRepository.find(queryOptions);
 
       return users;
