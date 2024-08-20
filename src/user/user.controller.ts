@@ -19,6 +19,7 @@ import { Not } from 'typeorm';
 
 import { SearchUserDto } from './dto/seach-user.dto';
 import { UpdateUserByUserDto } from './dto/update-user-by-user.dto';
+import { ChangePasswordDto } from './dto/change-password.dto';
 
 
 @Controller('user')
@@ -39,6 +40,17 @@ export class UserController {
   async login(@Body() loginDto: LoginDto) {
     // returns the response from de service
     return this.userService.login(loginDto)
+  }
+  @Post('change-password')
+  @UseGuards(JwtAuthGuard)  // Guard to ensure the user is authenticated
+  @HttpCode(HttpStatus.OK)
+  async changePassword(
+    @Body() changePasswordDto: ChangePasswordDto,
+    @Req() req: Request,
+  ): Promise<{ message: string }> {
+    const userId = req.user.sub;  // Assuming that req.user contains the authenticated user's info
+    await this.userService.updatePassword(userId, changePasswordDto.currentPassword, changePasswordDto.newPassword);
+    return { message: 'Password successfully changed' };
   }
 
   @Get('profile')
