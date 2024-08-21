@@ -4,7 +4,7 @@ import { AppService } from './app.service';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { UserModule } from './user/user.module';
 import { ConfigModule, ConfigService } from '@nestjs/config';
-import config from 'config/config';
+import config from 'src/config/config';
 import { databaseConfig } from './database/database';
 import { RateLimiterMiddleware } from './middlewares/rate-limiter.middleware';
 import { WinstonModule } from 'nest-winston';

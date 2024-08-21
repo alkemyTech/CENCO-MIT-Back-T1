@@ -10,8 +10,10 @@ import { ConfigService } from '@nestjs/config';
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
 
+  const configService = app.get(ConfigService);
+
   app.enableCors({
-    origin: 'http://localhost:5173',
+    origin: configService.get<string>('cors.origin'),
     methods: 'GET,HEAD,PUT,PATCH,POST,DELETE',
     credentials: true,
   });
@@ -34,8 +36,8 @@ async function bootstrap() {
 
   app.useGlobalFilters(new HttpExceptionFilter());
 
-  const configService = app.get(ConfigService);
   const userService = app.get(UserService);
+  
 
   const userEmail = configService.get<string>('defaultAdmin.email');
   const existingUser = await userService.findByEmail(userEmail);
