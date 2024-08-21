@@ -320,33 +320,29 @@ export class UserService {
       }
     }
   }
-  async updatePassword(userId: number, currentPassword: string, newPassword: string) {
-    const user = await this.userRepository.findOne({
-      where: { id: userId },
-    });
-  
+  async updatePassword(userId: number, currentPassword: string, newPassword: string): Promise<{ statusCode: number, message: string }> {
+    const user = await this.userRepository.findOne({ where: { id: userId } });
+
     if (!user) {
       throw new NotFoundException("The user doesn't exist");
     }
-    console.log(currentPassword)
-    console.log(user.password)
+
     // Verify the current password
     const isMatch = await bcrypt.compare(currentPassword, user.password);
-    console.log(isMatch)
     if (!isMatch) {
-      throw new UnauthorizedException('Current password is incorrect');
+      // Return unauthorized response if passwords don't match
+      return {
+        statusCode: HttpStatus.UNAUTHORIZED,
+        message: 'Password does not match',
+      };
     }
 
-  
-    // Hash the new password using your existing hashPassword method
+    // Hash the new password and update it
     const hashedPassword = await this.hashPassword(newPassword);
-  
-    // Update the user's password
     user.password = hashedPassword;
-  
+
     try {
       await this.userRepository.save(user);
-  
       return {
         statusCode: HttpStatus.OK,
         message: 'Password updated successfully',

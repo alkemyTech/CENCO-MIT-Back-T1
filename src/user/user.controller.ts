@@ -43,15 +43,20 @@ export class UserController {
   }
   @Post('change-password')
   @UseGuards(JwtAuthGuard)  // Guard to ensure the user is authenticated
-  @HttpCode(HttpStatus.OK)
   async changePassword(
     @Body() changePasswordDto: ChangePasswordDto,
     @Req() req: Request,
-  ): Promise<{ message: string }> {
-    const userId = req.user.sub;  // Assuming that req.user contains the authenticated user's info
-    await this.userService.updatePassword(userId, changePasswordDto.currentPassword, changePasswordDto.newPassword);
-    return { message: 'Password successfully changed' };
+  ): Promise<{ statusCode: number, message: string }> {
+    const userId = req.user.sub;  
+
+    const result = await this.userService.updatePassword(userId, changePasswordDto.currentPassword, changePasswordDto.newPassword);
+
+    return {
+      statusCode: result.statusCode,
+      message: result.message,
+    };
   }
+
 
   @Get('profile')
   @UseGuards(JwtAuthGuard)
