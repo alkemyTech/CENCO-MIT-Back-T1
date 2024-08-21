@@ -27,4 +27,7 @@ export default () => ({
     email: process.env.DEFAULT_ADMIN_EMAIL,
     password: process.env.DEFAULT_ADMIN_PASSWORD,
   },
+  cors: {
+    origin: process.env.CORS_ORIGIN,
+  },
 });

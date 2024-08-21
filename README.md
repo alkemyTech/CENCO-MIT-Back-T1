@@ -37,6 +37,9 @@ RATE_LIMIT_SIGNUP_WINDOW_MS=60000  # 1 minuto
 RATE_LIMIT_SIGNUP_MAX_REQUESTS=10  # 10 solicitudes
 RATE_LIMIT_GENERAL_WINDOW_MS=60000  # 1 minuto
 RATE_LIMIT_GENERAL_MAX_REQUESTS=100  # 100 solicitudes
+
+# CORS Configuration
+CORS_ORIGIN="http://localhost:5173"
 ```
 
 ## Seed Script SQL
