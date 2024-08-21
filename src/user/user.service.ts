@@ -320,10 +320,41 @@ export class UserService {
       }
     }
   }
+  async updatePassword(userId: number, currentPassword: string, newPassword: string): Promise<{ statusCode: number, message: string }> {
+    const user = await this.userRepository.findOne({ where: { id: userId } });
+
+    if (!user) {
+      throw new NotFoundException("The user doesn't exist");
+    }
+
+    // Verify the current password
+    const isMatch = await bcrypt.compare(currentPassword, user.password);
+    if (!isMatch) {
+      // Return unauthorized response if passwords don't match
+      return {
+        statusCode: HttpStatus.UNAUTHORIZED,
+        message: 'Password does not match',
+      };
+    }
+
+    // Hash the new password and update it
+    const hashedPassword = await this.hashPassword(newPassword);
+    user.password = hashedPassword;
+
+    try {
+      await this.userRepository.save(user);
+      return {
+        statusCode: HttpStatus.OK,
+        message: 'Password updated successfully',
+      };
+    } catch (error) {
+      throw new InternalServerErrorException('Failed to update password');
+    }
+  }
 
   async searchUsers(searchUserDto: SearchUserDto): Promise<Partial<User>[]> {
     try {
-      const { name, email, country,id } = searchUserDto;
+      const { name, email, country } = searchUserDto;
 
       const queryOptions: any = {
         select: [
@@ -351,10 +382,12 @@ export class UserService {
       if (country) {
         queryOptions.where['country'] = Like(`%${country}%`);
       }
-      if (id) {
-        queryOptions.where['id'] = Like(`%${id}%`);
-      }
+
       const users = await this.userRepository.find(queryOptions);
+
+      if (users.length <= 0) {
+        return await this.findAll();
+      }
 
       return users;
     } catch (error) {
