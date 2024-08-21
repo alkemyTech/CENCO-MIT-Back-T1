@@ -1,4 +1,6 @@
 import { IsEmail, IsOptional, IsString, MaxLength, MinLength } from 'class-validator';
+import { IsInEnum } from 'src/decorators/role-validator.decorator';
+import { Role } from '../entities/role.enum';
 
 export class UpdateUserDto {
 
@@ -15,4 +17,8 @@ export class UpdateUserDto {
     @IsOptional()
     @IsString()
     phone?: string;
+
+    @IsOptional()
+    @IsInEnum(Role)
+    role?: Role;
 }
