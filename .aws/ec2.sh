@@ -1,38 +1,58 @@
 #!/bin/bash
 
 # Parámetros para la configuración VPC
-NETWORK_NAME="cenco-vpc"
-SUBNET_NAME_PUBLIC="cenco-public-subnet"
-SUBNET_NAME_PRIVATE="cenco-private-subnet"
-INTERNET_GATEWAY="cenco-gtw"
-ROUTING_TABLE="cenco-route-table"
-CIDR="10.0.0.0/16"
+NETWORK_NAME="my-cenco-vpc"
+SUBNET_NAME_PUBLIC="my-cenco-public"
+SUBNET_NAME_PRIVATE="my-cenco-private"
+INTERNET_GATEWAY="my-cenco-gtw"
+ROUTING_TABLE="my-cenco-route-table"
+CIDR="10.1.0.0/16"
 AWS_REGION="us-east-1"
-SUBNET_PUBLIC_CIDR="10.0.1.0/24"
-SUBNET_PRIVATE_CIDR="10.0.2.0/24"
+SUBNET_PUBLIC_CIDR_A="10.1.1.0/24"
+SUBNET_PUBLIC_CIDR_B="10.1.2.0/24"
+SUBNET_PRIVATE_CIDR_A="10.1.3.0/24"
+SUBNET_PRIVATE_CIDR_B="10.1.4.0/24"
+
 # Parámetros para la configuración EC2
-INSTANCE_NAME="server-cenco"
+INSTANCE_NAME="my-server-cenco"
 AMI="ami-0e86e20dae9224db8"
 INSTANCE_TYPE="t2.micro"
-KEY_PAIR_NAME="server-cenco"
-SECURITY_GROUP="server-cenco-sg"
-REPO_URL="https://github.com/alkemyTech/CENCO-MIT-Back-T1.git"
-PROJECT_DIRECTORY="CENCO-MIT-Back-T1"
-NODEJS_VERSION="v20.14.0"
+KEY_PAIR_NAME="my-server-cenco"
+SECURITY_GROUP="my-server-cenco-sg"
 
 # Creación de la VPC y subredes
-VPC_ID=$(aws ec2 create-vpc --cidr-block $CIDR --region $AWS_REGION --query 'Vpc.VpcId' --output text)
+export VPC_ID=$(aws ec2 create-vpc --cidr-block $CIDR --region $AWS_REGION --query 'Vpc.VpcId' --output text)
 echo "Se creó la VPC con ID: $VPC_ID"
 aws ec2 create-tags --resources $VPC_ID --tags Key=Name,Value=$NETWORK_NAME
 
-PUBLIC_SUBNET_ID=$(aws ec2 create-subnet --vpc-id $VPC_ID --cidr-block $SUBNET_PUBLIC_CIDR --availability-zone "${AWS_REGION}a" --query 'Subnet.SubnetId' --output text)
-echo "Subred pública creada con ID: $PUBLIC_SUBNET_ID"
-aws ec2 create-tags --resources $PUBLIC_SUBNET_ID --tags Key=Name,Value=$SUBNET_NAME_PUBLIC
-aws ec2 modify-subnet-attribute --subnet-id $PUBLIC_SUBNET_ID --map-public-ip-on-launch
+sleep 10
 
-PRIVATE_SUBNET_ID=$(aws ec2 create-subnet --vpc-id $VPC_ID --cidr-block $SUBNET_PRIVATE_CIDR --availability-zone "${AWS_REGION}a" --query 'Subnet.SubnetId' --output text)
-echo "Subred privada creada con ID: $PRIVATE_SUBNET_ID"
-aws ec2 create-tags --resources $PRIVATE_SUBNET_ID --tags Key=Name,Value=$SUBNET_NAME_PRIVATE
+# Habilitar DNS resolution y DNS hostnames en la VPC
+aws ec2 modify-vpc-attribute --vpc-id $VPC_ID --enable-dns-support
+aws ec2 modify-vpc-attribute --vpc-id $VPC_ID --enable-dns-hostnames
+echo "DNS resolution y DNS hostnames habilitados para la VPC $VPC_ID"
+
+# Subred pública en la zona de disponibilidad us-east-1a
+export PUBLIC_SUBNET_ID_A=$(aws ec2 create-subnet --vpc-id $VPC_ID --cidr-block $SUBNET_PUBLIC_CIDR_A --availability-zone "${AWS_REGION}a" --query 'Subnet.SubnetId' --output text)
+echo "Subred pública (us-east-1a) creada con ID: $PUBLIC_SUBNET_ID_A"
+aws ec2 create-tags --resources $PUBLIC_SUBNET_ID_A --tags Key=Name,Value="${SUBNET_NAME_PUBLIC}-a"
+aws ec2 modify-subnet-attribute --subnet-id $PUBLIC_SUBNET_ID_A --map-public-ip-on-launch
+
+# Subred pública en la zona de disponibilidad us-east-1b
+export PUBLIC_SUBNET_ID_B=$(aws ec2 create-subnet --vpc-id $VPC_ID --cidr-block $SUBNET_PUBLIC_CIDR_B --availability-zone "${AWS_REGION}b" --query 'Subnet.SubnetId' --output text)
+echo "Subred pública (us-east-1b) creada con ID: $PUBLIC_SUBNET_ID_B"
+aws ec2 create-tags --resources $PUBLIC_SUBNET_ID_B --tags Key=Name,Value="${SUBNET_NAME_PUBLIC}-b"
+aws ec2 modify-subnet-attribute --subnet-id $PUBLIC_SUBNET_ID_B --map-public-ip-on-launch
+
+# Subred privada en la zona de disponibilidad us-east-1a
+export PRIVATE_SUBNET_ID_A=$(aws ec2 create-subnet --vpc-id $VPC_ID --cidr-block $SUBNET_PRIVATE_CIDR_A --availability-zone "${AWS_REGION}a" --query 'Subnet.SubnetId' --output text)
+echo "Subred privada (us-east-1a) creada con ID: $PRIVATE_SUBNET_ID_A"
+aws ec2 create-tags --resources $PRIVATE_SUBNET_ID_A --tags Key=Name,Value="${SUBNET_NAME_PRIVATE}-a"
+
+# Subred privada en la zona de disponibilidad us-east-1b
+export PRIVATE_SUBNET_ID_B=$(aws ec2 create-subnet --vpc-id $VPC_ID --cidr-block $SUBNET_PRIVATE_CIDR_B --availability-zone "${AWS_REGION}b" --query 'Subnet.SubnetId' --output text)
+echo "Subred privada (us-east-1b) creada con ID: $PRIVATE_SUBNET_ID_B"
+aws ec2 create-tags --resources $PRIVATE_SUBNET_ID_B --tags Key=Name,Value="${SUBNET_NAME_PRIVATE}-b"
 
 # Creación y asociación de Gateway de Internet
 IGW_ID=$(aws ec2 create-internet-gateway --query 'InternetGateway.InternetGatewayId' --output text)
@@ -44,8 +64,11 @@ aws ec2 create-tags --resources $IGW_ID --tags Key=Name,Value=$INTERNET_GATEWAY
 ROUTE_TABLE_ID=$(aws ec2 create-route-table --vpc-id $VPC_ID --query 'RouteTable.RouteTableId' --output text)
 aws ec2 create-route --route-table-id $ROUTE_TABLE_ID --destination-cidr-block "0.0.0.0/0" --gateway-id $IGW_ID
 echo "Tabla de rutas configurada con ID: $ROUTE_TABLE_ID"
-aws ec2 associate-route-table --route-table-id $ROUTE_TABLE_ID --subnet-id $PUBLIC_SUBNET_ID
-echo "Subred pública asociada a la tabla de rutas"
+
+# Asociar ambas subredes públicas a la tabla de rutas
+aws ec2 associate-route-table --route-table-id $ROUTE_TABLE_ID --subnet-id $PUBLIC_SUBNET_ID_A
+aws ec2 associate-route-table --route-table-id $ROUTE_TABLE_ID --subnet-id $PUBLIC_SUBNET_ID_B
+echo "Subredes públicas asociadas a la tabla de rutas"
 
 echo "Configuración de VPC y subredes completada."
 
@@ -54,14 +77,18 @@ aws ec2 create-key-pair --key-name $KEY_PAIR_NAME --query 'KeyMaterial' --output
 chmod 400 ${KEY_PAIR_NAME}.pem
 echo "Par de llaves creado con el nombre: $KEY_PAIR_NAME"
 
+# Guardar el nombre del Key Pair en un archivo
+echo $KEY_PAIR_NAME > key_pair_name.txt
+
 # Creación del grupo de seguridad y configuración de reglas
-SG_ID=$(aws ec2 create-security-group --group-name $SECURITY_GROUP --description "Security group for deployment" --vpc-id $VPC_ID --query 'GroupId' --output text)
+export SG_ID=$(aws ec2 create-security-group --group-name $SECURITY_GROUP --description "Security group for deployment" --vpc-id $VPC_ID --query 'GroupId' --output text)
 echo "Grupo de seguridad creado con ID: $SG_ID"
 
 CURRENT_IP=$(curl -s http://checkip.amazonaws.com)
 aws ec2 authorize-security-group-ingress --group-id $SG_ID --protocol tcp --port 22 --cidr ${CURRENT_IP}/32
 aws ec2 authorize-security-group-ingress --group-id $SG_ID --protocol tcp --port 80 --cidr 0.0.0.0/0
 aws ec2 authorize-security-group-ingress --group-id $SG_ID --protocol tcp --port 443 --cidr 0.0.0.0/0
+aws ec2 authorize-security-group-ingress --group-id $SG_ID --protocol tcp --port 3306 --cidr 0.0.0.0/0
 echo "Reglas de seguridad configuradas para el grupo $SECURITY_GROUP"
 
 # Lanzamiento de la instancia EC2
@@ -70,7 +97,7 @@ INSTANCE_ID=$(aws ec2 run-instances \
   --instance-type $INSTANCE_TYPE \
   --key-name $KEY_PAIR_NAME \
   --security-group-ids $SG_ID \
-  --subnet-id $PUBLIC_SUBNET_ID \
+  --subnet-id $PUBLIC_SUBNET_ID_A \
   --associate-public-ip-address \
   --region $AWS_REGION \
   --tag-specifications "ResourceType=instance,Tags=[{Key=Name,Value=$INSTANCE_NAME}]" \
@@ -95,66 +122,16 @@ if [ -z "$PUBLIC_IP" ]; then
 fi
 
 echo "Instancia EC2 con IP pública: $PUBLIC_IP"
-echo "Preparando la instancia para el despliegue."
+echo "Guardando la IP pública en un archivo para el siguiente script."
 
-# Esperar a que la instancia esté lista para conexiones SSH
-sleep 60
+# Guardar la IP pública en un archivo para usar en el script de conexión
+echo $PUBLIC_IP > public_ip.txt
 
-# Conexión a la instancia y configuración del entorno
-ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -i ${KEY_PAIR_NAME}.pem ubuntu@$PUBLIC_IP <<EOF
-  # Actualización del sistema e instalación de dependencias
-  sudo apt-get update
-  sudo apt-get install -y build-essential curl
 
-  # Instalación de NVM y Node.js
-  curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.39.3/install.sh | bash
-  export NVM_DIR="\$HOME/.nvm"
-  [ -s "\$NVM_DIR/nvm.sh" ] && \. "\$NVM_DIR/nvm.sh"
-  nvm install $NODEJS_VERSION
-  nvm use $NODEJS_VERSION
-
-  # Clonación del repositorio y acceso al directorio del proyecto
-  git clone $REPO_URL
-  cd $PROJECT_DIRECTORY
-
-  # Creación del archivo .env con variables de entorno
-  cat <<EOT > .env
-PORT=3306
-DATABASE="name_database"
-USERNAMEDB="root"
-PASSWORD="123456"
-HOST="localhost"
-JWT_SECRET=ead643ce042680b8acf42e5f9e8463318cc63bcd8a51cd40ee9cf1444b718a029e8e342f7083042db0742d8f244af94f8aac2c909a6f73d00060d1b5f5fb40f8
-DEFAULT_ADMIN_NAME=Admin
-DEFAULT_ADMIN_RUT=11.111.111-1
-DEFAULT_ADMIN_EMAIL=admin@admin.cl
-DEFAULT_ADMIN_PASSWORD=Password
-
-# Configuración de límite de tasa
-RATE_LIMIT_LOGIN_WINDOW_MS=60000  # 1 minuto
-RATE_LIMIT_LOGIN_MAX_REQUESTS=5  # 5 intentos
-RATE_LIMIT_SIGNUP_WINDOW_MS=60000  # 1 minuto
-RATE_LIMIT_SIGNUP_MAX_REQUESTS=10  # 10 solicitudes
-RATE_LIMIT_GENERAL_WINDOW_MS=60000  # 1 minuto
-RATE_LIMIT_GENERAL_MAX_REQUESTS=100  # 100 solicitudes
-
-# Configuración de CORS
-CORS_ORIGIN="http://localhost:5173"
-EOT
-
-  # Verificación del contenido del directorio
-  ls -la
-
-  # Instalación de dependencias del proyecto
-  npm install
-
-  # Compilación del proyecto
-  npm run build
-
-  # Iniciar la aplicación
-  npm run start:prod &
-
-  echo "Aplicación desplegada y ejecutándose en $PUBLIC_IP"
-EOF
-
-echo "Script completado. La aplicación está lista y ejecutándose en $PUBLIC_IP."
+echo "VPC_ID=$VPC_ID" > infrastructure_output.txt
+echo "SG_ID=$SG_ID" >> infrastructure_output.txt
+echo "PUBLIC_SUBNET_ID_A=$PUBLIC_SUBNET_ID_A" >> infrastructure_output.txt
+echo "PUBLIC_SUBNET_ID_B=$PUBLIC_SUBNET_ID_B" >> infrastructure_output.txt
+echo "PRIVATE_SUBNET_ID_A=$PRIVATE_SUBNET_ID_A" >> infrastructure_output.txt
+echo "PRIVATE_SUBNET_ID_B=$PRIVATE_SUBNET_ID_B" >> infrastructure_output.txt
+echo "INSTANCE_ID=$INSTANCE_ID" >> infrastructure_output.txt
