@@ -389,7 +389,7 @@ export class UserService {
       const users = await this.userRepository.find(queryOptions);
 
       if (users.length <= 0) {
-        return await this.findAll();
+        return [];
       }
 
       return users;
